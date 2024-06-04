@@ -1,10 +1,11 @@
 from icecream import ic
+from config import DB_FILE
 
 
 def last_period_main(db_name: str, file_name: str, sheet_name: str):
     """создает основной отчет и историю цен материалов"""
     ic()
-    # table = _get_materials_with_monitoring(db_name, history_depth=10)
+    table = _get_materials_with_monitoring(db_name, history_depth=10)
     # ic(len(table))
     # ic(table[0])
     # # основной отчет
@@ -18,10 +19,8 @@ def last_period_main(db_name: str, file_name: str, sheet_name: str):
 
 
 if __name__ == "__main__":
-    location = "office"  # office  # home
-    local = LocalData(location)
     ic()
     file_name = "larix_materials_report.xlsx"
     sheet_name = "materials"
     # создаем основной отчет и историю цен материалов
-    last_period_main(local.db_file, file_name, sheet_name)
+    last_period_main(DB_FILE, file_name, sheet_name)

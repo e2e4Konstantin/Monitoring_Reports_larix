@@ -112,3 +112,36 @@ SET previous_id = previous_period.id
 FROM tblPeriods AS periods
 JOIN tblPeriods AS previous_period
     ON previous_period.supplement_number = periods.supplement_number - 1;
+
+SELECT * FROM larix."period" WHERE title ~'^\s*Дополнение\s*72\s*$';
+
+SELECT
+	p.title "period",
+	tr.title "type" ,
+	--tr.code,
+	r.pressmark,
+	r.title,
+	uom.title "uom",
+	r.netto,
+	r.brutto,
+	r.price "базовая стоимость",
+	r.cur_price "текущая стоимость",
+	r.*
+FROM larix.resources r
+JOIN larix.type_resource tr on tr.id = r.type_resource
+JOIN larix.unit_of_measure uom on uom.id=r.unit_of_measure
+JOIN larix.period p on p.id=r.period
+WHERE
+	r."period" = (SELECT id FROM larix."period" WHERE title ~'^\s*Дополнение\s*72\s*$' LIMIT 1)
+	AND r.deleted = 0
+	AND tr.code  = 'MR'
+	AND r.pressmark ~ '^\s*1\.'
+	AND r.pressmark !~ '^\s*1\.0'
+ORDER BY r.pressmark_sort
+--LIMIT 30
+;
+
+transport_code,
+transport_base_price,
+monitoring_price
+transport_flag
