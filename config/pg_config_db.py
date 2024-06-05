@@ -69,8 +69,22 @@ class PostgresDB:
                     return f"{cursor.rowcount} строк обновлено."
         return None
 
+    def execute(self, query, *args):  # -> psycopg2.Cursor | None:
+        """ Execute SQL """
+        self.connect()
+        if self.connection:
+            with closing(self.connection) as conn:
+                try:
+                    self.cursor = conn.cursor()
+                    self.cursor.execute(query, *args)
+                    print(type(self.cursor))
+                    return self.cursor
+                except psycopg2.DatabaseError as e:
+                    print(e)
+                    raise e
+        return None
 
-    def select_rows_dict_cursor(self, query, args=None):
+    def select(self, query, args=None):
         """ SELECT as dicts."""
         self.connect()
         with closing(self.connection) as conn:
@@ -86,16 +100,16 @@ class PostgresDB:
 
 
 if __name__ == "__main__":
-    from sql_queries.sql_pg_export import sql_export
+    from sql_queries.sql_pg_export import sql_pg_export
     from pg_connect import ais_access
     from pprint import pprint
 
 
     with PostgresDB(ais_access) as db:
-        query = sql_export["test_sql"]
+        query = sql_pg_export["test_sql"]
         query_parameter = {"period_ids": (150862302, 150996873)}
 
-        result = db.select_rows_dict_cursor(query, query_parameter)
+        result = db.select(query, query_parameter)
         print("\n", len(result))
 
         pprint([dict(x) for x in result])

@@ -1,16 +1,42 @@
+from icecream import ic
+import psycopg2
+from psycopg2.extras import DictRow
 
-def get_materials_with_monitoring(
-    db_file: str, history_depth: int
-) -> list[Material] | None:
-    """Стоимость материалов с данными последнего загруженного мониторинга."""
+#
+from config import PostgresDB, ais_access
+from models import Material, ProductType
+from sql_queries import sql_pg_queries
+
+def _materials_constructor(material: DictRow):
+    return Material(
+        product_type=ProductType.MATERIAL,
+        product_code = material["code"],
+        product_description=material["description"],
+        unit_measure=material["unit_measure"],
+        #
+        material_base_price=material["base_price"],
+        material_price=material["actual_price"],
+    )
+
+
+def get_materials_from_larix() -> tuple[Material, ...] | None:
+    """."""
     table = None
-    with dbTolls(db_file) as db:
-        # получить id записей материалов с максимальным индексом периода и данными мониторинга
-        materials = db.go_select(
-            sql_materials_reports["select_records_for_max_index_with_monitoring"]
+    with PostgresDB(ais_access) as db:
+        materials = db.select(
+            sql_pg_queries["select_materials_for_period"],
+            {"regexp_pattern": "^\s*Дополнение\s*72\s*$"}
         )
+        ic(len(materials))
         table = [
-            _materials_constructor(db, material, history_depth)
+            _materials_constructor(material)
             for material in materials
         ]
     return table if table else None
+
+
+if __name__ == "__main__":
+    ic()
+    table = get_materials_from_larix()
+    ic(table[:5])
+    ic(len(table))
