@@ -20,8 +20,9 @@ sql_pg_queries = {
             tc.price "transport_base_price",
             tc.cur_price "transport_current_price"
             ,
+            sc.rate "storage_rate",
             sc.title "storage_name",
-            sc.rate "storage_rate"
+            sc.cmt "storage_description"
         FROM larix.resources r
         JOIN larix.type_resource tr on tr.id = r.type_resource
         JOIN larix.unit_of_measure uom on uom.id=r.unit_of_measure
