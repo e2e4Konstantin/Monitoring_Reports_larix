@@ -61,7 +61,7 @@ class PostgresDB:
 
     def update_rows(self, query) -> str | None:
         """ update rows """
-        self.connect()
+        # self.connect()
         if self.connection:
             with closing(self.connection) as conn:
                 with conn.cursor() as cursor:
@@ -71,7 +71,7 @@ class PostgresDB:
 
     def execute(self, query, *args):  # -> psycopg2.Cursor | None:
         """ Execute SQL """
-        self.connect()
+        # self.connect()
         if self.connection:
             with closing(self.connection) as conn:
                 try:
@@ -84,18 +84,19 @@ class PostgresDB:
                     raise e
         return None
 
-    def select(self, query, args=None):
-        """ SELECT as dicts."""
-        self.connect()
-        with closing(self.connection) as conn:
-        # with self.connection as conn:
+    def select(self, query, params=None):
+        """Execute a SELECT query and return the results as a list of dictionaries."""
+        # self.connect()
+        with self.connection.cursor(cursor_factory=DictCursor) as cursor:
             try:
-                self.cursor.execute(query, args)
-                records = self.cursor.fetchall()
+                cursor.execute(query, params)
+                records = cursor.fetchall()
             except psycopg2.DatabaseError as e:
                 print(e)
                 raise e
-        return records if records else None
+            return records if records else None
+
+
 
 
 

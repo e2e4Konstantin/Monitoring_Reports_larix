@@ -5,6 +5,7 @@ sql_pg_queries = {
             SELECT id FROM larix."period" WHERE title ~ %(regexp_pattern)s LIMIT 1
         )
         SELECT
+            r.id "material_id",
             p."title" "period",
             tr.title "type" ,
             r.pressmark "code",
@@ -36,7 +37,7 @@ sql_pg_queries = {
             AND r.pressmark LIKE '1.%%'
             AND r.pressmark NOT LIKE '1.0%%'
         ORDER BY r.pressmark_sort
-        --LIMIT 50
+        LIMIT 5
         ;
     """,
     "test_sql": """--sql
@@ -56,5 +57,37 @@ sql_pg_queries = {
             AND r.pressmark LIKE %(starts_pressmark)s
             AND r.pressmark !~ %(not_starts)s
             LIMIT 10;
+    """,
+    # select price materials for targets periods
+    "select_prices_material_for_target_periods": """--sql
+        /*
+        получить историю цен материала по material_id
+        для индексных периодов начиная с даты создания date_start
+        */
+        WITH target_periods AS (
+            SELECT
+                p.id AS "period_id",
+                TRIM(SUBSTRING(p.title, 1, 4))::int AS "index_number",
+                p.date_start "start_date",
+                p.title "period_name"
+            FROM larix."period" p
+            WHERE
+                p.deleted_on IS NULL
+                AND p.is_infl_rate = 1
+                AND p.period_type = 1
+                AND date_start >= '2024-01-01' ::date --
+                AND LOWER(p.title) ~ '^\s*\d+\s*индекс/дополнение\s*\d+\s*\(.+\)\s*$'
+            ORDER BY p.date_start ASC
+        )
+        SELECT
+            r.price "base_price",
+            r.cur_price "current_price",
+            TRIM(SUBSTRING(tp."period_name", 1, 4))::int AS "index_number"
+        FROM larix.resources r
+        JOIN target_periods tp ON tp.period_id = r."period"
+        WHERE
+            id = %(material_id)s -- 27054534
+        ORDER BY r.pressmark_sort
+        ;
     """,
 }
