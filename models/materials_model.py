@@ -73,4 +73,5 @@ if __name__ == "__main__":
     )
     ic(m)
     ic(m.__dict__)
+    ic(m.__dict__.keys())
 

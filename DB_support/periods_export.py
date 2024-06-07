@@ -31,7 +31,7 @@ def _export_table_periods_to_csv(csv_file: str, pgr_access: DatabaseAccess):
     """Сохраняет запрос на выборку larix.period в CSV файл."""
     with PostgresDB(pgr_access) as db:
         query = sql_pg_export["get_all_periods"]
-        results = db.select_rows_dict_cursor(query)
+        results = db.select(query)
         if results:
             df = pd.DataFrame(results)
             df.columns = results[0].keys()
@@ -389,20 +389,20 @@ def parsing_raw_periods_from_csv(csv_file: str, db_file: str) -> int:
     периодов tblPeriods. Загружает периоды типа "Дополнение" и "Индекс"
     для раздела 'ТСН' и 'Оборудование'.
     """
-    # _load_csv_to_raw_table(csv_file, db_file, delimiter=",")
-    # with SQLiteDB(db_file) as db:
-    #     # Удалить все периоды !!! в tblPeriods
-    #     db.go_execute(sql_sqlite_periods["delete_all_data_periods"])
-    #     # переносим ТСН периоды
-    #     _ton_supplement_periods_parsing(db)
-    #     _ton_index_periods_parsing(db)
-    #     # переносим периоды Мониторинга
-    #     _monitoring_periods_parsing(db)
+    _load_csv_to_raw_table(csv_file, db_file, delimiter=",")
+    with SQLiteDB(db_file) as db:
+        # Удалить все периоды !!! в tblPeriods
+        db.go_execute(sql_sqlite_periods["delete_all_data_periods"])
+        # переносим ТСН периоды
+        _ton_supplement_periods_parsing(db)
+        _ton_index_periods_parsing(db)
+        # переносим периоды Мониторинга
+        _monitoring_periods_parsing(db)
 
-    # # создаем ссылки на предыдущее дополнения
-    # _create_supplement_chain_periods(db_file)
-    # # создаем ссылки на предыдущее индексы и родительские дополнения
-    # _create_index_chain_periods(db_file)
+    # создаем ссылки на предыдущее дополнения
+    _create_supplement_chain_periods(db_file)
+    # создаем ссылки на предыдущее индексы и родительские дополнения
+    _create_index_chain_periods(db_file)
     # создаем ссылки на предыдущее периоды мониторинга
     _create_monitoring_chain_periods(db_file)
 
@@ -416,5 +416,5 @@ if __name__ == "__main__":
     csv_file_name = "pg_periods.csv"
     csv_file = os.path.join(DB_FILE_PATH, csv_file_name)
     #
-    # _export_table_periods_to_csv(csv_file, ais_access)
+    _export_table_periods_to_csv(csv_file, ais_access)
     parsing_raw_periods_from_csv(csv_file, DB_FILE)

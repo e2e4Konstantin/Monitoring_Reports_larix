@@ -8,3 +8,5 @@ from config.const import (
     ROUNDING,
     PRICE_HISTORY_START_DATE,
 )
+from config.periods_config import periods_pattern_name
+

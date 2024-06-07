@@ -1,7 +1,8 @@
 from os import path
 
-DB_FILE_NAME = "Support_DB.sqlite3"
-DB_FILE_PATH = r"C:\Users\kazak.ke\Documents\PythonProjects\MonitoringReports_larix\DB_support"
+DB_FILE_NAME = "Supporting_DB.sqlite3"
+DB_FILE_PATH = r"C:\Users\kazak.ke\Documents\PythonProjects\Monitoring_Reports_larix\DB_support"
+
 #
 DB_FILE = path.join(DB_FILE_PATH, DB_FILE_NAME)
 RAW_DATA_TABLE_NAME = "tblRawData"
