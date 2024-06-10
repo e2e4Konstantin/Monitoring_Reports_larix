@@ -1,8 +1,11 @@
 from os import path
 
+DUCK_DB_FILE_NAME = "Supporting_DB.duck_db"
 DB_FILE_NAME = "Supporting_DB.sqlite3"
 DB_FILE_PATH = r"C:\Users\kazak.ke\Documents\PythonProjects\Monitoring_Reports_larix\DB_support"
+#
 
+DUCK_DB_FILE = path.join(DB_FILE_PATH, DUCK_DB_FILE_NAME)
 #
 DB_FILE = path.join(DB_FILE_PATH, DB_FILE_NAME)
 RAW_DATA_TABLE_NAME = "tblRawData"
@@ -20,7 +23,7 @@ MONITORING_ORIGIN = "мониторинг"
 
 ROUNDING = 2
 MINIMUM_VALUE = 0E-2
-PRICE_HISTORY_START_DATE = "2024-01-01"
+PRICE_HISTORY_START_DATE = "2023-09-01"
 
 
 CONSOLE_COLORS = {

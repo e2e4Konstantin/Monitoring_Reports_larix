@@ -12,10 +12,19 @@ from config import (
     PRICE_HISTORY_START_DATE,
     DB_FILE,
     periods_pattern_name,
+    DUCK_DB_FILE
 )
 from models import Material, ProductType, HistoricPrice, MiniPeriod
 from sql_queries import sql_pg_queries
-from DB_support import save_materials_support_db
+from DB_support.history_price_export import (
+    save_history_prices_sqlite_db,
+    create_pivot_table_by_index_number,
+)
+from DB_support.history_price_export_duck_db import (
+    save_history_prices_support_duck_db,
+    show_pivot_table_duck_db,
+)
+
 
 def _get_price_history_for_all_materials(
     db: PostgresDB, start_date: str
@@ -25,6 +34,12 @@ def _get_price_history_for_all_materials(
         sql_pg_queries["select_prices_all_materials_for_target_periods"],
         {"start_date": start_date},
     )
+    # ic(dict(prices[0]).keys())
+    # for price in prices:
+    #     print(price)
+    #     price["base_price"] = float(price["base_price"])
+    #     price["current_price"] = float(price["current_price"])
+
     return prices
 
 def _get_price_history_for_material(
@@ -113,11 +128,20 @@ def get_materials_from_larix() -> tuple[Material, ...] | None:
 
         prices = _get_price_history_for_all_materials(db, PRICE_HISTORY_START_DATE)
         ic(len(prices))
+    #
+        # save_history_prices_support_duck_db(DUCK_DB_FILE, prices)
+        save_history_prices_sqlite_db(DB_FILE, prices)
+        #
+
     return table if table else None
 
 
 if __name__ == "__main__":
     ic()
-    table = get_materials_from_larix()
-    ic(table[:2])
-    ic(len(table))
+
+    # table = get_materials_from_larix()
+    # show_pivot_table_duck_db(DUCK_DB_FILE)
+    create_pivot_table_by_index_number(DB_FILE)
+
+    # ic(table[:2])
+    # ic(len(table))

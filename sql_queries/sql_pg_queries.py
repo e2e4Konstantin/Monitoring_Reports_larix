@@ -159,17 +159,20 @@ sql_pg_queries = {
         )
         SELECT
             r.pressmark "code",
-            r.price "base_price",
-            r.cur_price "current_price",
+            r.price::float "base_price",
+            r.cur_price::float "current_price",
             TRIM(SUBSTRING(tp."period_name", 1, 4))::int AS "index_number"
+            --,
+            -- r.pressmark_sort "digit_code"
         FROM larix.resources r
         JOIN target_periods tp ON tp.period_id = r."period"
         WHERE
+            --id IN (27054238,27054240,27054242,27054244,27054246) AND
             r.deleted = 0
             AND r.pressmark LIKE '1.%%'
             AND r.pressmark NOT LIKE '1.0%%'--
         ORDER BY r.pressmark_sort, tp.start_date ASC
-        --LIMIT 30
+        LIMIT 30
         ;
     """,
 }

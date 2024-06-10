@@ -64,14 +64,44 @@ sql_sqlite_materials = {
             code TEXT,
             digit_code INTEGER,
             base_price REAL,
-            current_price REAL
+            current_price REAL,
+            index_number INTEGER
         );
     """,
     "create_index_history_price_materials": """--sql
         CREATE INDEX idxHistoryPriceMaterials ON tblHistoryPriceMaterials (
-            code, digit_code
+            code, digit_code, index_number
         );
     """,
+    "insert_row_history_price_materials": """--sql
+        INSERT INTO tblHistoryPriceMaterials (
+            code, digit_code, base_price, current_price, index_number
+        )
+        VALUES ( ?, ?, ?, ?, ? );
+    """,
+    "select_all_history_price_materials": """--sql
+        SELECT * FROM tblHistoryPriceMaterials ORDER BY digit_code;
+    """,
+    "select_code_history_price_materials": """--sql
+        SELECT * FROM tblHistoryPriceMaterials where code = ? ORDER BY index_number;
+    """,
+    "select_unique_code_history_price_materials": """--sql
+        SELECT DISTINCT code FROM tblHistoryPriceMaterials ORDER BY digit_code;
+    """,
+    "select_unique_index_number_history_price_materials": """--sql
+        SELECT DISTINCT index_number FROM tblHistoryPriceMaterials ORDER BY index_number;
+    """,
+    # Pivot
+    "delete_table_pivot_index_number": """DROP TABLE IF EXISTS tblPivotIndex;""",
+    "create_table_pivot_index_number": """--sql
+            CREATE TABLE tblPivotIndex (
+                id INTEGER PRIMARY KEY NOT NULL,
+                code TEXT UNIQUE NOT NULL
+            );
+        """,
+    "insert_column_to_pivot_index_number": """--sql
+            ALTER TABLE tblPivotIndex ADD COLUMN ? REAL;
+        """,
 }
 
 

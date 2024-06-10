@@ -4,4 +4,5 @@ from common_features.text_features import (
     convert_to_integer,
     parse_date,
     date_to_numbers,
+    code_to_number,
 )
