@@ -177,3 +177,43 @@ WHERE
 ORDER BY r.pressmark_sort
 --LIMIT 50
 ;
+SELECT * FROM (
+WITH
+	target_periods AS (
+		SELECT
+			p.id AS "period_id",
+			p.title,
+			--
+--			TRIM(SUBSTRING(p.title, 11, 13))::varchar(15) AS "period_name",
+			TRIM((regexp_match(LOWER(p.title), '^\s*мониторинг\s*(.*)\s\('))[1])::varchar AS period_name,
+			p.date_start "start_date"
+		FROM larix."period" p
+		WHERE
+			deleted_on IS NULL AND period_type = 1 AND date_start >= '2024-01-01'::date
+			AND title ~ '^\s*[^ЕTФКТВНХ].+'
+			AND p.title ~* '^\s*мониторинг\s*(.*)\s\((\d+)\s+сборник\/дополнение\s+(\d+).*\)\s*$'
+		ORDER BY created_on DESC
+	)
+SELECT
+	m.id,
+	m.resources, m."period",
+	r.pressmark,
+	pl.title,  pl.period_name,
+	m.is_delivery_incl,
+	m.price_and_delivery,
+	a.agent_name,
+	min(m.price_and_delivery) OVER (PARTITION BY r.pressmark,  m.period) AS min_price
+--	m.*
+FROM larix.resource_price_list m
+JOIN larix."period" per ON per."id" = m."period" AND per.deleted_on IS NULL
+JOIN larix.resources r ON r.id = m.resources AND r."period" = m."period"
+JOIN larix.agent a ON a.id = m.agent AND a."period" = m."period"
+JOIN target_periods pl ON pl.period_id = m."period"
+WHERE
+--	r.pressmark IN ('1.1-1-4', '1.1-1-5', '1.1-1-6') AND
+	m.deleted_on IS NULL
+--	AND m.PERIOD IN (166991596, 167319938)
+--LIMIT 10
+) AS history_price
+WHERE history_price.price_and_delivery = history_price.min_price
+;
