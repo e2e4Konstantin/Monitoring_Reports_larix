@@ -45,15 +45,16 @@ def create_pivot_table_by_index_number(db_file: str):
         codes = db.go_select(
             sql_sqlite_materials["select_unique_code_history_price_materials"]
         )
-        print(len(codes))
+        codes = tuple([x["code"] for x in codes])
+        ic("всего шифров: ",len(codes))
         indexes = db.go_select(
             sql_sqlite_materials["select_unique_index_number_history_price_materials"]
         )
         if indexes is None:
             return None
-        ic(tuple(indexes[0]))
+        ic("первый индексный период: ", tuple(indexes[0]))
         columns = [str(x["index_number"]) for x in indexes]
-        ic(columns)
+        # ic(columns)
 
         db.go_execute(sql_sqlite_materials["delete_table_pivot_index_number"])
         db.go_execute(sql_sqlite_materials["create_table_pivot_index_number"])
@@ -61,27 +62,29 @@ def create_pivot_table_by_index_number(db_file: str):
             query = f'ALTER TABLE tblPivotIndex ADD COLUMN "{column}" REAL;'
             db.go_execute(query)
 
-
         for code in codes:
             result = db.go_select(
-                sql_sqlite_materials["select_code_history_price_materials"], code
+                sql_sqlite_materials["select_code_history_price_materials"], (code,)
             )
-            code_data = [(x["index_number"], x["base_price"], x["current_price"])
+            digit_code = result[0]["digit_code"]
+            # ic(code, digit_code)
+            code_data ={x["index_number"]: x["current_price"]
                          for x in result
-                         ]
-            ic(code_data)
+            }
+            # ic(code_data)
+            insert_values = [
+                code_data.get(int(x), None) for x in columns
+            ]
+            # ic(insert_values)
+            insert_data = code, digit_code, *insert_values
+            # ic(insert_data)
 
-            dd = [x[2] for x in code_data]
-            dd.insert(0, code[0])
-            print(dd)
-            # query_insert = f"INSERT INTO tblHistoryPriceMaterials (code, digit_code, base_price, current_price, index_number) VALUES ( ?, ?, ?, ?, ? );"
-            query_head = r"INSERT INTO tblPivotIndex (code, " + ", ".join(
+            query_head = r"INSERT INTO tblPivotIndex (code, digit_code, " + ", ".join(
                 [f'"{x}"' for x in columns]
             )
-
-            query_tail = ") VALUES ( ?, " + ", ".join(["?" for x in range(len(columns))]) + ");"
+            query_tail = ") VALUES ( ?, ?, " + ", ".join(["?" for x in range(len(columns))]) + ");"
 
             query = query_head + query_tail
-            ic(query)
-            db.go_execute(query, dd)
+            # ic(query)
+            db.go_execute(query, insert_data)
 

@@ -96,7 +96,8 @@ sql_sqlite_materials = {
     "create_table_pivot_index_number": """--sql
             CREATE TABLE tblPivotIndex (
                 id INTEGER PRIMARY KEY NOT NULL,
-                code TEXT UNIQUE NOT NULL
+                code TEXT UNIQUE NOT NULL,
+                digit_code INTEGER
             );
         """,
     "insert_column_to_pivot_index_number": """--sql

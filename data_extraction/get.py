@@ -25,6 +25,7 @@ from DB_support.history_price_export_duck_db import (
     show_pivot_table_duck_db,
 )
 
+from DB_support.materials_export import save_materials_support_db
 
 def _get_price_history_for_all_materials(
     db: PostgresDB, start_date: str
@@ -109,25 +110,25 @@ def get_materials_from_larix() -> tuple[Material, ...] | None:
     period_pattern = periods_pattern_name["supplement_72"]
 
     with PostgresDB(ais_access) as db:
-        # larix_period = _get_period_id_title(db, period_pattern)
-        # if larix_period:
-        #     larix_period_id, larix_period_title = larix_period
-        #     period = MiniPeriod(
-        #         period_larix_id=larix_period_id, period_name=larix_period_title
-        #     )
-        #     ic(period)
-        # else:
-        #     return None
-        # query = sql_pg_queries["select_materials_for_period_id"]
-        # materials = db.select(query, {"period_id": period.period_larix_id})
-        # ic(len(materials))
-        # table = [_materials_constructor(material) for material in materials]
-        # if table:
-        #     ic(DB_FILE)
-        #     save_materials_support_db(DB_FILE, period, table)
+        larix_period = _get_period_id_title(db, period_pattern)
+        if larix_period:
+            larix_period_id, larix_period_title = larix_period
+            period = MiniPeriod(
+                period_larix_id=larix_period_id, period_name=larix_period_title
+            )
+            ic(period)
+        else:
+            return None
+        query = sql_pg_queries["select_materials_for_period_id"]
+        materials = db.select(query, {"period_id": period.period_larix_id})
+        ic(len(materials))
+        table = [_materials_constructor(material) for material in materials]
+        if table:
+            ic(DB_FILE)
+            save_materials_support_db(DB_FILE, period, table)
 
         prices = _get_price_history_for_all_materials(db, PRICE_HISTORY_START_DATE)
-        ic(len(prices))
+        ic("история цен: ", len(prices))
     #
         # save_history_prices_support_duck_db(DUCK_DB_FILE, prices)
         save_history_prices_sqlite_db(DB_FILE, prices)
@@ -139,7 +140,7 @@ def get_materials_from_larix() -> tuple[Material, ...] | None:
 if __name__ == "__main__":
     ic()
 
-    # table = get_materials_from_larix()
+    table = get_materials_from_larix()
     # show_pivot_table_duck_db(DUCK_DB_FILE)
     create_pivot_table_by_index_number(DB_FILE)
 

@@ -172,7 +172,7 @@ sql_pg_queries = {
             AND r.pressmark LIKE '1.%%'
             AND r.pressmark NOT LIKE '1.0%%'--
         ORDER BY r.pressmark_sort, tp.start_date ASC
-        LIMIT 30
+        --LIMIT 30
         ;
     """,
 }
