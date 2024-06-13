@@ -19,8 +19,7 @@ def _prepare_history_price_material_data(price: sqlite3.Row) -> tuple:
 
 
 
-
-def save_history_prices_sqlite_db(
+def save_materials_history_prices_sqlite_db(
     db_file: str, list_of_prices: list[pg_DictRow] = None
 ):
     """
@@ -37,9 +36,9 @@ def save_history_prices_sqlite_db(
                 sql_sqlite_materials["insert_row_history_price_materials"], data
             )
 
-def create_pivot_table_by_index_number(db_file: str):
+def create_materials_pivot_table_by_index_number(db_file: str):
     """
-
+    Создает таблицу tblPivotIndex в SQLite db_file. Разворачивает таблицу tblHistoryPriceMaterials по индексным периодам.
     """
     with SQLiteDB(db_file) as db:
         codes = db.go_select(
@@ -56,10 +55,12 @@ def create_pivot_table_by_index_number(db_file: str):
         columns = [str(x["index_number"]) for x in indexes]
         # ic(columns)
 
-        db.go_execute(sql_sqlite_materials["delete_table_pivot_index_number"])
-        db.go_execute(sql_sqlite_materials["create_table_pivot_index_number"])
+        db.go_execute(sql_sqlite_materials["delete_table_pivot_index_materials"])
+        db.go_execute(sql_sqlite_materials["create_table_pivot_index_materials"])
         for column in columns:
-            query = f'ALTER TABLE tblPivotIndex ADD COLUMN "{column}" REAL;'
+            # query = f'ALTER TABLE tblPivotIndexMaterials ADD COLUMN "{column}" REAL;'
+            # db.go_execute(query)
+            query = sql_sqlite_materials["insert_column_to_pivot_index_materials"].format(column)
             db.go_execute(query)
 
         for code in codes:
@@ -79,8 +80,9 @@ def create_pivot_table_by_index_number(db_file: str):
             insert_data = code, digit_code, *insert_values
             # ic(insert_data)
 
-            query_head = r"INSERT INTO tblPivotIndex (code, digit_code, " + ", ".join(
-                [f'"{x}"' for x in columns]
+            query_head = (
+                r"INSERT INTO tblPivotIndexMaterials (code, digit_code, "
+                + ", ".join([f'"{x}"' for x in columns])
             )
             query_tail = ") VALUES ( ?, ?, " + ", ".join(["?" for x in range(len(columns))]) + ");"
 

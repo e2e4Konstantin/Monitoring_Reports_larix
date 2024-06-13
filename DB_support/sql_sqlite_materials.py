@@ -91,18 +91,27 @@ sql_sqlite_materials = {
     "select_unique_index_number_history_price_materials": """--sql
         SELECT DISTINCT index_number FROM tblHistoryPriceMaterials ORDER BY index_number;
     """,
+    # ----------------------------------------------------------------------
     # Pivot
-    "delete_table_pivot_index_number": """DROP TABLE IF EXISTS tblPivotIndex;""",
-    "create_table_pivot_index_number": """--sql
-            CREATE TABLE tblPivotIndex (
+    # tblPivotIndexMaterials развернутая по номерам индексных периодов таблица tblHistoryPriceMaterials
+    "delete_table_pivot_index_materials": """--sql
+        DROP TABLE IF EXISTS tblPivotIndexMaterials;
+        """,
+    "create_table_pivot_index_materials": """--sql
+            CREATE TABLE tblPivotIndexMaterials (
                 id INTEGER PRIMARY KEY NOT NULL,
                 code TEXT UNIQUE NOT NULL,
                 digit_code INTEGER
             );
         """,
-    "insert_column_to_pivot_index_number": """--sql
-            ALTER TABLE tblPivotIndex ADD COLUMN ? REAL;
+    "insert_column_to_pivot_index_materials": """--sql
+            ALTER TABLE tblPivotIndexMaterials ADD COLUMN "{}" REAL;
         """,
+    "create_index_pivot_index_materials": """--sql
+        CREATE INDEX tblPivotIndexMaterials ON tblHistoryPriceMaterials (
+            code, digit_code
+        );
+    """,
 }
 
 

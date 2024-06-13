@@ -16,16 +16,22 @@ from config import (
 )
 from models import Material, ProductType, HistoricPrice, MiniPeriod
 from sql_queries import sql_pg_queries
-from DB_support.history_price_export import (
-    save_history_prices_sqlite_db,
-    create_pivot_table_by_index_number,
-)
-from DB_support.history_price_export_duck_db import (
-    save_history_prices_support_duck_db,
-    show_pivot_table_duck_db,
+
+from data_extraction.history_material_price_export import (
+    save_materials_history_prices_sqlite_db,
+    create_materials_pivot_table_by_index_number,
 )
 
-from DB_support.materials_export import save_materials_support_db
+
+
+# from data_extraction.history_material_price_export import (
+#     save_materials_history_prices_sqlite_db,
+#     create_pivot_table_by_index_number,
+# )
+
+from data_extraction.materials_export import save_materials_support_db
+
+
 
 def _get_price_history_for_all_materials(
     db: PostgresDB, start_date: str
@@ -101,9 +107,6 @@ def _get_period_id_title(database: PostgresDB, period_pattern: str) -> int | Non
     return period[0]["id"], clean_text(period[0]["title"]) if period else None
 
 
-
-
-
 def get_materials_from_larix(period_pattern: str) -> tuple[Material, ...] | None:
     """Получить данные по материалам и историю цен на них для нужного периода и историю цен начиная с даты в config."""
     table = None
@@ -130,8 +133,10 @@ def get_materials_from_larix(period_pattern: str) -> tuple[Material, ...] | None
         ic("история цен: ", len(prices))
         #
         # save_history_prices_support_duck_db(DUCK_DB_FILE, prices)
-        save_history_prices_sqlite_db(DB_FILE, prices)
+        # show_pivot_table_duck_db(DUCK_DB_FILE)
         #
+    save_materials_history_prices_sqlite_db(DB_FILE, prices)
+    create_materials_pivot_table_by_index_number(DB_FILE)
 
     return table if table else None
 
@@ -139,8 +144,8 @@ def get_materials_from_larix(period_pattern: str) -> tuple[Material, ...] | None
 if __name__ == "__main__":
     ic()
     table = get_materials_from_larix(periods_pattern_name["supplement_72"])
-    # show_pivot_table_duck_db(DUCK_DB_FILE)
-    create_pivot_table_by_index_number(DB_FILE)
+
+
 
     # ic(table[:2])
     # ic(len(table))

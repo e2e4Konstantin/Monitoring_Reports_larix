@@ -3,13 +3,11 @@ setup.py
 DB_support/__init__.py
 DB_support/create_support_db.py
 DB_support/db_config.py
-DB_support/history_price_export.py
-DB_support/history_price_export_duck_db.py
-DB_support/materials_export.py
 DB_support/periods_export.py
 DB_support/sql_duck_db.py
 DB_support/sql_sqlite_directories.py
 DB_support/sql_sqlite_materials.py
+DB_support/sql_sqlite_monitoring.py
 DB_support/sql_sqlite_periods.py
 MonitoringReports_larix.egg-info/PKG-INFO
 MonitoringReports_larix.egg-info/SOURCES.txt
@@ -24,6 +22,12 @@ config/periods_config.py
 config/pg_config_db.py
 config/pg_connect.py
 config/tools_json_config.py
+data_extraction/2_get_materials_data_from_larix.py
+data_extraction/3_get_monitoring_history_prices.py
+data_extraction/__init__.py
+data_extraction/history_material_price_export.py
+data_extraction/history_price_export_duck_db.py
+data_extraction/materials_export.py
 models/__init__.py
 models/code_model.py
 models/historical_price.py

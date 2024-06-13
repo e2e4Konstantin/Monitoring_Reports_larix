@@ -24,7 +24,7 @@ def save_materials_support_db(
         db.go_execute(sql_sqlite_materials["delete_table_expanded_material"])
         db.go_execute(sql_sqlite_materials["create_table_expanded_material"])
         db.go_execute(sql_sqlite_materials["create_index_expanded_material"])
-        # 
+        #
         for material in list_of_materials:
             data = _prepare_material_data(material, period)
             db.go_execute(
