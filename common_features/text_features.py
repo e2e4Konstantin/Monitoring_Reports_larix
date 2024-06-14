@@ -7,22 +7,27 @@ from dateutil import parser
 
 _re_compiled_patterns = {
     "wildcard": re.compile(r"[\t\n\r\f\v\s+]+"),
+    "wk2": re.compile("^\s+|\n|\r|\t|\v|\f|\s+$"),
     "code_valid_chars": re.compile(r"[^\d+.-]+"),
     "digits": re.compile(r"[^\d+]+"),
     "digits_dots": re.compile(r"[^\d+.]+"),
+    #
+    "quote_code": re.compile(r"\d+\.\d+(-\d+){2}"),
+    "subsection_groups": re.compile(r"(^\d+\.\d+-\d+-)(\d+)\s*"),
 }
 
 
-def remove_wildcard(source: str = None) -> str | None:
-    """Удаляет из строки переносы строк и табуляции, одиночные пробелы оставляет"""
-    return (
-        re.sub(_re_compiled_patterns["wildcard"], r" ", source.strip())
-        if source
-        else None
-    )
 
 
-def clear_code(source: str = None) -> str | None:
+def clean_string(source_text: str = None) -> str | None:
+    """Очищает входную строку, удаляя новые строки, табуляции и лишние пробелы."""
+    if source_text is None:
+        return None
+    if isinstance(source_text, str):
+        return re.sub(_re_compiled_patterns["wildcard"], " ", source_text).strip()
+
+
+def clean_code(source: str = None) -> str | None:
     """Удаляет из строки все символы кроме (чисел, '.', '-')"""
     return re.sub(_re_compiled_patterns["code_valid_chars"], r"", source)
 
@@ -43,7 +48,7 @@ def keep_just_numbers_dots(source: str = None) -> str | None:
 
 def clean_text(text: str) -> str | None:
     """Удаляет из строки служебные символы и лишние пробелы."""
-    text = remove_wildcard(text)
+    text = clean_string(text)
     return " ".join(text.split()) if text else None
 
 
@@ -67,17 +72,21 @@ def split_code_int(src_code: str = None) -> tuple[int, ...] | None:
     return ret
 
 
-def get_float_value(value: str) -> float:
-    """Конвертирует строку в число с плавающей точкой."""
-    if value:
-        value = value.replace(",", ".", 1)
-        return float(value) if isfloat(value) else 0.0
-    return 0.0
+def get_float(text: str) -> float | None:
+    """Конвертирует строку в число с плавающей точкой.."""
+    text = text.replace(",", ".", 1).strip()
+    try:
+        return float(text)
+    except ValueError:
+        return None
 
 
-def convert_to_integer(value: str) -> int:
+def get_integer(string: str) -> int | None:
     """Конвертирует строку в целое число."""
-    return int(value) if isint(value) else 0
+    try:
+        return int(string)
+    except ValueError:
+        return None
 
 
 def parse_date(date_string: str) -> str | None:
@@ -114,9 +123,16 @@ def code_to_number(src_code: str) -> int:
     return 1
 
 
+def is_quote_code(code: str) -> bool:
+    """Проверяет, совпадает ли код с шаблоном расценки."""
+    return _re_compiled_patterns["quote_code"].match(code) is not None
+
+
 if __name__ == "__main__":
     from icecream import ic
-
+    s = "  Отпускная цена\n поставщика (без\tНДС),        рублей за кг. \n ГАУ     НИАЦ \n  "
+    sm =clean_string(s)
+    ic(sm)
 
     ic(date_to_numbers("2023-12-14"))
 

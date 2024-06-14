@@ -17,3 +17,7 @@ POM: project outlay module
 
 
 ## Таблица для хранения периодов.
+
+pip
+
+pip install "pandas[excel]"

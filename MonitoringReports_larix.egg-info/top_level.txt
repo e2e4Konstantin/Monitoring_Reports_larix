@@ -3,4 +3,5 @@ common_features
 config
 data_extraction
 models
+parse_monitoring_src_file
 sql_queries

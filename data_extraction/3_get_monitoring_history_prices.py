@@ -61,7 +61,8 @@ def _save_monitoring_prices_sqlite_db(
 
 
 def _create_pivot_monitoring_index(db_file: str):
-    """ """
+    """Создает разворотную таблицу tblPivotMonitoringIndex с ценами по шифру и
+    с номерами индексных периодов в названиях столбцов."""
     with SQLiteDB(db_file) as db:
         codes = db.go_select(
             sql_sqlite_monitoring_history_prices["select_unique_code"]
@@ -121,8 +122,10 @@ def _create_pivot_monitoring_index(db_file: str):
 
 def transfer_raw_monitoring_materials(start_date: str):
     """
-    Заполняет таблицу tblMonitoringMaterials данными из таблицы tblRawData
-    только для периода period.
+    Заполняет таблицу tblMonitoringMaterials данными из запроса к БД larix
+    только для индексных периодов начиная с даты start_date.
+    Создает разворотную таблицу tblPivotMonitoringIndex с ценами по шифру и
+    с номерами индексных периодов в названиях столбцов.
     """
     monitoring_prices = None
     with PostgresDB(ais_access) as db:
