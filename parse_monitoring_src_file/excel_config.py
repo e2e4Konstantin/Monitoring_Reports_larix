@@ -10,7 +10,6 @@ from common_features import (
     output_message_exit,
     get_float,
     clean_string,
-    # construct_absolute_file_path,
     does_file_exist,
     is_file_in_use,
 )
@@ -40,14 +39,16 @@ class ExcelControl:
         return f"excel file: {self.file}, sheet: {self.book}, {self.sheet}"
 
 
-
     def open_file(self):
-        """Open the workbook"""
-        try:
-            self.book = openpyxl.load_workbook(self.file)
-            self.sheet = self.book[self.sheet_name]
-        except IOError:
-            raise
+        """Открыть рабочую книгу"""
+        if does_file_exist(self.file) and not is_file_in_use(self.file):
+            try:
+                self.book = openpyxl.load_workbook(self.file)
+                self.sheet = self.book[self.sheet_name]
+            except IOError:
+                raise
+        else:
+            output_message_exit("open_excel_file >> Не могу открыть файл", self.file)
 
     def save_file(self):
         """Сохранить рабочую книгу в файл."""

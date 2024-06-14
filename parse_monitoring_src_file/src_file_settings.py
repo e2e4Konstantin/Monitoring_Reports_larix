@@ -6,6 +6,13 @@ from common_features import construct_absolute_file_path, generate_result_file_n
 CellPosition = namedtuple(typename="CellPosition", field_names=["row", "column"])
 CellPosition.__annotations__ = {"row": int, "column": str}
 
+SrcFileData = namedtuple(
+    typename="SrcFileData",
+    field_names=["file_name", "sheet_name", "supplement_number", "index_number"],
+)
+SrcFileData.__annotations__ = {"file_name": str, "sheet_name": str,  "supplement": int,    "index": str,}
+
+
 PRICE_COLUMN_DELTA = 3
 HEADER_HEIGHT = 3
 RELATIVE_CODE_POSITION = 11
@@ -15,9 +22,10 @@ TRANSPORT_HEADER_HEIGHT = 1
 spelling_variations_delivery = ("с доставкой", "c доставкой")
 
 anchors = {
-    "materials_base_column_value": "Отпускная цена поставщика (без НДС), рублей ГАУ НИАЦ",
-    "materials_base_column_name": "J",
-    "materials_base_column_number": 10,
+    "monitoring_base_column_value": "Отпускная цена поставщика (без НДС), рублей ГАУ НИАЦ",
+    "monitoring_delivery_column_value": "Доставка",
+    "monitoring_code_column_value": "№№ позиций ТСН-2001.1",
+    "monitoring_description_column_value": "Наименование материалов, изделий и конструкций по прайс-листу поставщика/производителя",
     #
     "transport_base_column_value": "Код",
     "transport_base_column_name": "A",
@@ -98,7 +106,7 @@ for data in src_material_data.keys():
         src_material_data[data]["supplement"],
         src_material_data[data]["index"],
     )
-   
+
 
 
 
