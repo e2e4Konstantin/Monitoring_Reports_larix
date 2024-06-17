@@ -1,4 +1,7 @@
 sql_sqlite_materials = {
+    # ----------------------------------------------------------------------
+    # материалы в развернутом виде (по периодам Дополнения)
+    # ----------------------------------------------------------------------
     "insert_row_expanded_material": """--sql
         INSERT INTO tblExpandedMaterial (
             period_larix_id, period_name,
@@ -47,13 +50,23 @@ sql_sqlite_materials = {
             current_price REAL,
             inflation_rate REAL
         );
-    """,
+        """,
     "create_index_expanded_material": """--sql
         CREATE INDEX idxExpandedMaterial ON tblExpandedMaterial (
             code, digit_code
         );
-    """,
-    #
+        """,
+    "select_expanded_material_by_code_period_name": """--sql
+        SELECT *
+        FROM tblExpandedMaterial
+        WHERE
+            period_name = :period_name AND
+            code = :code
+        ;
+        """,
+    # ----------------------------------------------------------------------
+    # история цен материалов
+    # ----------------------------------------------------------------------
     "delete_table_history_price_materials": """DROP TABLE IF EXISTS tblHistoryPriceMaterials;""",
     "delete_index_history_price_materials": """DROP INDEX IF EXISTS idxHistoryPriceMaterials;""",
     "delete_all_data_history_price_materials": """DELETE FROM tblHistoryPriceMaterials;""",

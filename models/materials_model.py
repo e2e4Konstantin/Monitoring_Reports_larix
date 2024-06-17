@@ -11,6 +11,8 @@ class Material(Product, TransportCost):
         product_type: str = None,
         product_code: str = None,
         product_description: str = None,
+        gross_weight: float = 0.0,
+        net_weight: float = 0.0,
         unit_measure: str = None,
         base_price: float = 0.0,
         current_price: float = 0.0,
@@ -46,7 +48,7 @@ class Material(Product, TransportCost):
         )
 
     def __repr__(self):
-        s1 = f"{type(self).__name__}({self.product_type!r}, {self.code!r}, {self.description!r}, {self.unit_measure!r}, "
+        s1 = f"{type(self).__name__}({self.product_type!r}, {self.code!r}, {self.description!r}, {self.gross_weight}, {self.net_weight}, {self.unit_measure!r}, "
         s2 = f"{self.base_price}, {self.current_price}, {self.inflation_rate}, "
         s3 = f"{self.transport_code!r}, {self.transport_name!r}, {self.transport_base_price}, {self.transport_current_price}, {self.transport_inflation_rate}, "
         s4 = f"{self.storage_cost_rate}, {self.storage_cost_name!r}, {self.storage_cost_description!r}"

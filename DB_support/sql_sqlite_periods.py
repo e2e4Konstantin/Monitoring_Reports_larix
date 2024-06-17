@@ -5,16 +5,18 @@ sql_sqlite_periods = {
         UPDATE tblPeriods
         SET previous_id = :previous_id, parent_id = :parent_id
         WHERE id=:id;
-    """,
+        """,
     #
     "delete_table_periods": """--sql
         DROP TABLE IF EXISTS tblPeriods;
-    """,
+        """,
     "delete_index_periods": """--sql
         DROP INDEX IF EXISTS idxPeriods;
-    """,
+        """,
     "delete_all_data_periods": """DELETE FROM tblPeriods;
-    """,
+        """,
+    "delete_period_by_id": """DELETE FROM tblPeriods WHERE id=:period_id;
+        """,
     "create_table_periods": """--sql
     /*
     Таблица для хранения периодов.
@@ -150,6 +152,42 @@ sql_sqlite_periods = {
             ),
             period_type_row AS (
                 SELECT id FROM tblDirectories WHERE directory='period_types' AND name='supplement'
+            )
+        SELECT *
+        FROM tblPeriods
+        WHERE
+            owner_id = (SELECT id FROM owner_row)
+            AND period_type_id = (SELECT id FROM period_type_row)
+            AND supplement_number = :supplement_number
+        ;
+    """,
+    "select_monitoring_by_comment": """--sql
+        WITH
+            owner_row AS (
+                SELECT id FROM  tblDirectories WHERE directory = 'owners' AND name = 'monitoring'
+            ),
+            period_type_row AS (
+                SELECT id FROM  tblDirectories WHERE directory = 'period_types'  AND name = 'index'
+            )
+        SELECT *
+        FROM tblPeriods
+        WHERE
+            owner_id = (SELECT id FROM owner_row)
+            AND period_type_id = (SELECT id FROM period_type_row)
+            AND TRIM(LOWER(comment)) = TRIM(LOWER(:monitoring_comment))
+        ;
+    """,
+    "select_by_id": """--sql
+        SELECT * FROM tblPeriods WHERE id = :period_id
+        ;
+    """,
+    "select_supplement_by_number": """--sql
+        WITH
+            owner_row AS (
+                SELECT id FROM  tblDirectories WHERE directory = 'owners' AND name = 'TON'
+            ),
+            period_type_row AS (
+                SELECT id FROM  tblDirectories WHERE directory = 'period_types'  AND name = 'supplement'
             )
         SELECT *
         FROM tblPeriods

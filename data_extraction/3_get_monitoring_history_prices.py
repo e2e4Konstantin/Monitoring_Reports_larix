@@ -1,7 +1,7 @@
 import sqlite3
 from icecream import ic
 
-from DB_support.sql_sqlite_monitoring import sql_sqlite_monitoring_history_prices
+from DB_support.sql_sqlite_monitoring import sql_sqlite_monitoring
 from DB_support.db_config import SQLiteDB
 
 from psycopg2.extras import DictRow as pg_DictRow
@@ -49,15 +49,16 @@ def _save_monitoring_prices_sqlite_db(
     Сохранить историю цен мониторинга в  в SQLite db_file.
     """
     with SQLiteDB(db_file) as db:
-        db.go_execute(sql_sqlite_monitoring_history_prices["delete_table"])
-        db.go_execute(sql_sqlite_monitoring_history_prices["create_table"])
-        db.go_execute(sql_sqlite_monitoring_history_prices["create_index"])
+        db.go_execute(sql_sqlite_monitoring["delete_table_monitoring_history_prices"])
+        db.go_execute(sql_sqlite_monitoring["create_table_monitoring_history_prices"])
+        db.go_execute(sql_sqlite_monitoring["create_index_monitoring_history_prices"])
         #
         for price in list_of_prices:
             data = _prepare_monitoring_history_price_data(price)
             db.go_execute(
-                sql_sqlite_monitoring_history_prices["insert_row"], data
-                )
+                sql_sqlite_monitoring["insert_row_monitoring_history_prices"],
+                data,
+            )
 
 
 def _create_pivot_monitoring_index(db_file: str):
@@ -65,12 +66,12 @@ def _create_pivot_monitoring_index(db_file: str):
     с номерами индексных периодов в названиях столбцов."""
     with SQLiteDB(db_file) as db:
         codes = db.go_select(
-            sql_sqlite_monitoring_history_prices["select_unique_code"]
+            sql_sqlite_monitoring["select_unique_code_monitoring_history_price"]
         )
         codes = tuple([x["code"] for x in codes])
         ic("всего шифров: ", len(codes))
         indexes = db.go_select(
-            sql_sqlite_monitoring_history_prices["select_unique_index_number"]
+            sql_sqlite_monitoring["select_unique_index_number_monitoring_history_price"]
         )
         if indexes is None:
             return None
@@ -79,21 +80,15 @@ def _create_pivot_monitoring_index(db_file: str):
         columns = [str(x["index_number"]) for x in indexes]
         ic(columns)
 
-        db.go_execute(
-            sql_sqlite_monitoring_history_prices["delete_table_pivot_monitoring_index"]
-        )
-        db.go_execute(
-            sql_sqlite_monitoring_history_prices["create_table_pivot_monitoring_index"]
-        )
+        db.go_execute(sql_sqlite_monitoring["delete_table_pivot_monitoring_index"])
+        db.go_execute(sql_sqlite_monitoring["create_table_pivot_monitoring_index"])
         for column in columns:
             query = f'ALTER TABLE tblPivotMonitoringIndex ADD COLUMN "{column}" REAL;'
             db.go_execute(query)
 
         for code in codes:
             result = db.go_select(
-                sql_sqlite_monitoring_history_prices[
-                    "select_code"
-                ],
+                sql_sqlite_monitoring["select_code_monitoring_history_price"],
                 (code,),
             )
             digit_code = result[0]["digit_code"]

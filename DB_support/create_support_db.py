@@ -9,6 +9,7 @@ from config import (
 )
 from DB_support.sql_sqlite_directories import sql_sqlite_directories
 from DB_support.sql_sqlite_periods import sql_sqlite_periods
+from DB_support.sql_sqlite_monitoring import sql_sqlite_monitoring
 from icecream import ic
 
 def _create_periods_environment(db: SQLiteDB) -> int:
@@ -32,6 +33,17 @@ def _create_directory_environment(db: SQLiteDB) -> int:
     db.go_execute(sql_sqlite_directories["create_chain_index_directory"])
     return 0
 
+def _create_monitoring_environment(db: SQLiteDB) -> int:
+    """Инфраструктура для отчётов файлов мониторинга."""
+    db.go_execute(sql_sqlite_monitoring["delete_table_monitoring_report_files"])
+    db.go_execute(sql_sqlite_monitoring["create_table_monitoring_report_files"])
+    #
+    db.go_execute(sql_sqlite_monitoring["delete_table_monitoring_reports"])
+    db.go_execute(sql_sqlite_monitoring["create_table_monitoring_reports"])
+    db.go_execute(sql_sqlite_monitoring["create_index_monitoring_reports"])
+    return 0
+
+
 def create_tables_indexes(db_file: str) -> int:
     """
     Создает таблицы:
@@ -42,6 +54,7 @@ def create_tables_indexes(db_file: str) -> int:
     with SQLiteDB(db_file) as db:
         _create_periods_environment(db)
         _create_directory_environment(db)
+        _create_monitoring_environment(db)
     return 0
 
 
@@ -70,7 +83,11 @@ if __name__ == "__main__":
 
     db_name = DB_FILE
     ic(db_name)
-    ic("создаю таблицы и индексы справочников и периодов")
-    ic("все данные уничтожатся.")
-    create_tables_indexes(db_name)
-    fill_directories(db_name)
+    # ic("создаю таблицы и индексы справочников и периодов")
+    # ic("все данные уничтожатся.")
+    # create_tables_indexes(db_name)
+    # fill_directories(db_name)
+
+
+    with SQLiteDB(db_name) as db:
+        _create_monitoring_environment(db)

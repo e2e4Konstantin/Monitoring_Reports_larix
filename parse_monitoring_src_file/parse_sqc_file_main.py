@@ -1,8 +1,16 @@
+
+
 import pandas
 from icecream import ic
 #
 from config import DB_FILE
-from DB_support import SQLiteDB
+from DB_support import (
+    SQLiteDB,
+    sql_sqlite_periods,
+    sql_sqlite_monitoring,
+    sql_sqlite_queries,
+    create_new_monitoring_period,
+)
 
 #
 from common_features import (
@@ -123,12 +131,12 @@ def _load_df_to_sqlite_table(df: pandas.DataFrame, db_file: str, table_name: str
 
 
 
-def parse_monitoring_material_file(data: SrcFileData, db_file: str, table_name: str) -> int | None:
+def parse_monitoring_material_file(file_name: str, sheet_name: str, db_file: str, table_name: str) -> int | None:
     """
     Разбирает файл с ценами на материалы для мониторинга.
     Загружает данные в таблицу table_name базы данных db_file.
     """
-    materials = _get_monitoring_material_data(data.file_name, data.sheet_name)
+    materials = _get_monitoring_material_data(file_name, sheet_name)
     materials_df = pandas.DataFrame(
         materials, columns=["code", "price", "delivery", "description"]
     )
@@ -143,20 +151,80 @@ def parse_monitoring_material_file(data: SrcFileData, db_file: str, table_name: 
 
     return 0
 
+def take_monitoring_report_file_inventory(
+    db_file: str,
+    period_id: int,
+    report_monitoring_file: str,
+    sheet_name: str = "приложение А",
+)-> int | None:
+    """ Добавляет данные о файле отчета мониторинга в таблицу tblMonitorFiles. """
+    with SQLiteDB(db_file) as db:
+        query = sql_sqlite_periods["select_by_id"]
+        [period] = db.go_select(query, {"period_id": period_id})
+        ic(period["id"])
+        period_name = period["comment"]
 
+        file_id = db.go_insert(
+            sql_sqlite_monitoring["insert_monitoring_files"],
+            {
+                "period_id": period_id,
+                "report_file": report_monitoring_file,
+                "sheet_name": sheet_name,
+                "period_name": period_name,
+            },
+            message=f"добавляем данные о файле отчета мониторинга {report_monitoring_file} в таблицу tblMonitorFiles",
+        )
+        return file_id
+
+def save_the_monitoring_report(db_file: str, period_id: int, file_id: int) -> int:
+    with SQLiteDB(db_file) as db:
+        db.go_select(
+            sql_sqlite_monitoring["delete_data_for_period_id"], {"period_id": period_id}
+        )
+        raw_monitoring_data = db.go_select(sql_sqlite_queries["select_all_raw_table"])
+        for line in raw_monitoring_data:
+            data = {
+                    "period_id": period_id,
+                    "file_id": file_id,
+                    "code": line["code"],
+                    "supplier_price": line["price"],
+                    "delivery": line["delivery"],
+                    "description": line["description"],
+                    "digit_code": line["digit_code"],
+                }
+            db.go_insert(
+                sql_sqlite_monitoring["insert_monitoring_item"], data,
+                message=f"добавляем данные о материале {line['code']} в таблицу tblMonitoringMaterialsReports"
+            )
+    return 0
 
 
 if __name__ == "__main__":
     ic()
     # исходные данные
-    src_material_path = r"C:\Users\kazak.ke\Documents\Tmp"
-    src_file_name = "5_Отчет_апрель_2024_short.xlsx"
+    # src_material_path = r"C:\Users\kazak.ke\Documents\Tmp"
+    # src_file_name = "5_Отчет_апрель_2024_short.xlsx"
+
+    src_material_path = r"C:\Users\kazak.ke\Documents\Задачи\5_Надя\исходные_данные\материалы"
+    src_file_name = "6_Отчет май 2024.xlsx"
     src_file = construct_absolute_file_path(src_material_path, src_file_name)
-    src_data = SrcFileData(
-        file_name=src_file,
-        sheet_name="приложение А",
-        supplement_number=72,
-        index_number=212,
-    )
+    sheet_name = "приложение А"
+    #
+    # # создать новый период мониторинга
+    # period_id = create_new_monitoring_period(
+    #     DB_FILE,
+    #     previous_period="Апрель 2024",
+    #     period_name="Мониторинг Май 2024 (212 сборник/дополнение 72)",
+    # )
+    #
+    # записать в БД данные о файле отчета мониторинга
+    # period_id = 70  # Апрель 2024
+    period_id = 126  # Май 2024
+    file_id = take_monitoring_report_file_inventory(DB_FILE, period_id, src_file, "приложение А")
+
+    # file_id = 1
+    ic(file_id)
     # разобрать файл и записать в tblRawData sqlite
-    parse_monitoring_material_file(src_data, DB_FILE, "tblRawData")
+    parse_monitoring_material_file(src_file, sheet_name, DB_FILE, "tblRawData")
+    # сохранить данные о мониторинге в таблицу tblMonitoringMaterialsReports
+    save_the_monitoring_report(DB_FILE, period_id, file_id)

@@ -84,6 +84,8 @@ def _materials_constructor(material: DictRow):
         product_type=ProductType.MATERIAL,
         product_code=material["code"],
         product_description=material["description"],
+        gross_weight = material["brutto"],
+        net_weight = material["netto"],
         unit_measure=material["unit_measure"],
         #
         base_price=float(material["base_price"]),
@@ -108,7 +110,7 @@ def _get_period_id_title(database: PostgresDB, period_pattern: str) -> int | Non
 
 
 def get_materials_from_larix(period_pattern: str) -> tuple[Material, ...] | None:
-    """Получить данные по материалам и историю цен на них для нужного периода и историю цен начиная с даты в config."""
+    """Получить данные по материалам и историю цен на них для нужного периода начиная с даты в config."""
     table = None
 
     with PostgresDB(ais_access) as db:

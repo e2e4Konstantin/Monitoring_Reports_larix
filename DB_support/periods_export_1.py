@@ -21,7 +21,7 @@ from DB_support.db_config import SQLiteDB
 from common_features import (
     output_message_exit,
     clean_text,
-    convert_to_integer,
+    get_integer,
     parse_date,
     date_to_numbers,
 )
@@ -99,7 +99,7 @@ def _extract_supplement_number(text: str) -> int | None:
     """Извлекает номер дополнения из заданного текста.."""
     match = re.match(PERIOD_PATTERNS["supplement_number"], text)
     # return convert_to_integer(result.groups()[0])
-    return convert_to_integer(match.group(1)) if match else None
+    return get_integer(match.group(1)) if match else None
 
 
 def _extract_supplement_index_cmt(text: str) -> tuple[int, int, str] | None:
@@ -108,14 +108,15 @@ def _extract_supplement_index_cmt(text: str) -> tuple[int, int, str] | None:
     match = re.match(PERIOD_PATTERNS["index_number_supplement_cmt"], text)
     if match:
         index_number, supplement_number = (
-            convert_to_integer(group) for group in match.groups()[:-1]
+            get_integer(group) for group in match.groups()[:-1]
         )
         cmt = match.group(3)
         return supplement_number, index_number, cmt
     return None
 
-def _extract_monitoring_supplement_index_cmt(text: str) -> tuple[int, int, str] | None:
-    """Извлекает номера приложений, индексов и комментарии из текста."""
+def extract_monitoring_supplement_index_cmt(text: str) -> tuple[int, int, str] | None:
+    """Извлекает номера приложений, индексов и комментарии из текста.
+    supplement_number, index_number, comment """
     # Мониторинг Сентябрь 2023 (204 сборник/дополнение 69)
     match = re.match(PERIOD_PATTERNS["monitoring"], text)
     if match:
@@ -305,14 +306,14 @@ def _extract_monitoring_data_from_line(
 ) -> tuple:
     """Извлекает данные об периоде мониторинга из строки."""
     title = clean_text(line["title"])
-    supplement_number, index_number, cmt = _extract_monitoring_supplement_index_cmt(title)
+    supplement_number, index_number, cmt = extract_monitoring_supplement_index_cmt(title)
     date = parse_date(clean_text(line["date_start"]))
     comment = clean_text(cmt)
     basic_id = line["id"]
     parent_id = None
     chain_id = None
     # ic(title, supplement, date)
-    name = f"Мониторинг {cmt} {index_number}/{supplement_number} "
+    name = f"Мониторинг {cmt} {index_number}/{supplement_number}"
     # parent_id, chain_id, name, supplement_number, index_number, start_date,
     # comment, owner_id, period_type_id, database_id
     data = (
