@@ -71,7 +71,8 @@ def _header_create(table: list[Material], view_history_depth: int) -> str:
 def _materials_constructor(
     db: SQLiteDB, monitoring_index_num: int, supplement_period_name: str, row: sqlite3.Row, history_depth: int
 ) -> Material:
-    [supplement_material] = db.go_select(
+    # tblExpandedMaterial
+    supplement_material = db.go_select(
         sql_sqlite_materials["select_expanded_material_by_code_period_name"],
         {"period_name": supplement_period_name, "code": row["code"]},
     )
@@ -110,54 +111,55 @@ def _materials_constructor(
     return material
 
 
-def _get_materials_with_monitoring(
-        period_name: str, db_file: str, history_depth: int
+def _get_monitoring_materials_with_history_price(
+        period: sqlite3.Row, db_file: str, history_depth: int
 ) -> list[Material] | None:
     """Создать список материалов по отчету мониторинга
-    для периода period_name с глубиной истории history_depth.
+    для периода period_id с глубиной истории history_depth.
     """
     with SQLiteDB(db_file) as db:
-        [monitoring_period] = db.go_select(
-            sql_sqlite_periods["select_monitoring_by_comment"],
-            {"monitoring_comment": period_name},
-        )
-        monitoring_materials = db.go_select(
-            sql_sqlite_monitoring["select_monitoring_materials_for_period_id"],
-            {"period_id": monitoring_period["id"]},
-        )
-        supplement_number = monitoring_period["supplement_number"]
-        [supplement_period] = db.go_select(
-            sql_sqlite_periods["select_supplement_by_number"],
-            {"supplement_number": supplement_number},
-        )
-        supplement_period_name = supplement_period["name"]
-        table = [
-            _materials_constructor(db, supplement_period_name, material, history_depth)
-            for material in monitoring_materials
-        ]
-    return table if table else None
-
-
-
-
-def _create_material_monitoring_report(
-    db_file: str,
-    period_name: str,
-    report_file_name: str,
-    sheet_name: str,
-    view_history_depth: int,
-) -> int | None:
-    """Напечатать отчет по мониторингу материалов"""
-    with SQLiteDB(db_file) as db:
-        [period] = db.go_select(
-            sql_sqlite_periods["select_monitoring_by_comment"],
-            {"monitoring_comment": period_name},
-        )
+        # tblMonitoringMaterialsReports
         monitoring_materials = db.go_select(
             sql_sqlite_monitoring["select_monitoring_materials_for_period_id"],
             {"period_id": period["id"]},
         )
+        # найти период дополнения для периода мониторинга
+        supplement_number = period["supplement_number"]
+        supplement_period = db.go_select(
+            sql_sqlite_periods["select_supplement_by_number"],
+            {"supplement_number": supplement_number},
+        )
+        supplement_period_id = supplement_period["id"]
 
+        table = [
+            _materials_constructor(db, supplement_period_id, material, history_depth)
+            for material in monitoring_materials
+        ]
+    return table if table else None
+
+def get_period_by_comment(db_file: str, period_comment: str) -> int | None:
+    """Возвращает период мониторинга по его комментарию."""
+    with SQLiteDB(db_file) as db:
+        query = sql_sqlite_periods["select_monitoring_by_comment"]
+        period = db.go_select(query, {"monitoring_comment": period_comment})
+    return period[0] if period else None
+
+
+def create_material_monitoring_report(
+    period_name: str,
+    report_file_name: str,
+    sheet_name: str,
+    view_history_depth: int,
+    db_file: str
+) -> int | None:
+    """Напечатать отчет по мониторингу материалов"""
+    period = get_period_id_by_comment(db_file, period_name)
+    if not period_id:
+        message = f"В таблице 'tblPeriods'"
+        output_message_exit(message, f"Не найден период {period_name!r}")
+    #
+    table = _get_monitoring_materials_with_history_price(period, db_file, view_history_depth)
+    #
     with ExcelReport(report_file_name) as file:
         sheet = file.get_sheet(sheet_name, 0)
         file.delete_sheets(["Sheet", "Таблица 1"])
@@ -181,17 +183,18 @@ def _create_material_monitoring_report(
 
 if __name__ == "__main__":
     ic()
-    # исходные данные
-    # 1. для разбора входного файла надо запустить parse_monitoring_src_file\parse_sqc_file_main.py
-    # 2. для получения данных по материалам для нужного дополнения надо запустить data_extraction\2_get_materials_data_from_larix.py
-    # 3. для получения истории цен по мониторингу надо запустить data_extraction\3_get_monitoring_history_prices.py
+    # 1. создать БД create_new_support_db.py
+    # 2. прочитать данные для периода read_prepare_larix_data.py
+    # 3. читать исходный файл от мониторинга load_monitoring_file.py
 
-
-    report_file = "larix_materials_report.xlsx"
+    report_file = "april_materials_report.xlsx"
     sheet_name = "materials"
+    period_name = "Апрель 2024"
 
-    _create_material_monitoring_report(
+    create_material_monitoring_report(
+        period_name=period_name,
         report_file_name=report_file,
         sheet_name=sheet_name,
-        view_history_depth=4
+        view_history_depth=4,
+        db_file=DB_FILE
     )

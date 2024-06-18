@@ -12,7 +12,7 @@ from config import (
     PRICE_HISTORY_START_DATE,
     DB_FILE,
     periods_pattern_name,
-    DUCK_DB_FILE
+    # DUCK_DB_FILE
 )
 from models import Material, ProductType, HistoricPrice, MiniPeriod
 from sql_queries import sql_pg_queries
@@ -84,10 +84,10 @@ def _materials_constructor(material: DictRow):
         product_type=ProductType.MATERIAL,
         product_code=material["code"],
         product_description=material["description"],
-        gross_weight = material["brutto"],
-        net_weight = material["netto"],
         unit_measure=material["unit_measure"],
         #
+        gross_weight=float(material["brutto"]),
+        net_weight=float(material["netto"]),
         base_price=float(material["base_price"]),
         current_price=float(material["actual_price"]),
         #
@@ -109,8 +109,10 @@ def _get_period_id_title(database: PostgresDB, period_pattern: str) -> int | Non
     return period[0]["id"], clean_text(period[0]["title"]) if period else None
 
 
-def get_materials_from_larix(period_pattern: str) -> tuple[Material, ...] | None:
-    """Получить данные по материалам и историю цен на них для нужного периода начиная с даты в config."""
+def get_materials_from_larix(period_pattern: str) -> int | None:
+    """Получить данные по материалам и историю цен из Larix для периода period_pattern.
+    Получает историю цен для полученных материалов начиная с даты PRICE_HISTORY_START_DATE.
+    Сохраняет все полученные данные в таблицу tblExpandedMaterial SQLite БД."""
     table = None
 
     with PostgresDB(ais_access) as db:
@@ -125,29 +127,39 @@ def get_materials_from_larix(period_pattern: str) -> tuple[Material, ...] | None
             return None
         query = sql_pg_queries["select_materials_for_period_id"]
         materials = db.select(query, {"period_id": period.period_larix_id})
-        ic(len(materials))
+        ic("прочитано материалов: ", len(materials))
         table = [_materials_constructor(material) for material in materials]
         if table:
-            ic(DB_FILE)
+            ic(len(table))
+            ic(table[3])
             save_materials_support_db(DB_FILE, period, table)
+    return 0 if table else None
 
-        prices = _get_price_history_for_all_materials(db, PRICE_HISTORY_START_DATE)
-        ic("история цен: ", len(prices))
-        #
-        # save_history_prices_support_duck_db(DUCK_DB_FILE, prices)
-        # show_pivot_table_duck_db(DUCK_DB_FILE)
-        #
+
+def get_history_prices_materials_from_larix(history_start_date: str) -> int | None:
+    """
+    Получает историю цен материалов начиная с даты PRICE_HISTORY_START_DATE.
+    Сохраняет данные tblHistoryPriceMaterials в SQLite БД.
+    Строит развернутую по периодам таблицу с историей цен материалов.
+    Сохраняет в tblPivotIndexMaterials.
+    """
+
+    with PostgresDB(ais_access) as db:
+        prices = _get_price_history_for_all_materials(db, history_start_date)
+        ic("история цен материалов: ", len(prices))
+    if not prices:
+        return None
     save_materials_history_prices_sqlite_db(DB_FILE, prices)
     create_materials_pivot_table_by_index_number(DB_FILE)
-
-    return table if table else None
+    #
+    # for DuckDB
+    # save_history_prices_support_duck_db(DUCK_DB_FILE, prices)
+    # show_pivot_table_duck_db(DUCK_DB_FILE)
+    return 0 if prices else None
 
 
 if __name__ == "__main__":
     ic()
-    table = get_materials_from_larix(periods_pattern_name["supplement_72"])
+    get_materials_from_larix(periods_pattern_name["supplement_72"])
+    get_history_prices_materials_from_larix(PRICE_HISTORY_START_DATE)
 
-
-
-    # ic(table[:2])
-    # ic(len(table))

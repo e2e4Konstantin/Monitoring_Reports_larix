@@ -115,22 +115,24 @@ def _create_pivot_monitoring_index(db_file: str):
             db.go_execute(query, insert_data)
 
 
-def transfer_raw_monitoring_materials(start_date: str):
+
+
+def get_monitoring_materials_from_larix(sqlite_db_file: str, start_date: str):
     """
-    Заполняет таблицу tblMonitoringMaterials данными из запроса к БД larix
-    только для индексных периодов начиная с даты start_date.
-    Создает разворотную таблицу tblPivotMonitoringIndex с ценами по шифру и
-    с номерами индексных периодов в названиях столбцов.
+    Получить данные по мониторингу из larix.
+    Запомнить прочитанные данные в таблицу tblMonitoringMaterials SQLite.
+    Глубина истории цен берется только для индексных периодов начиная с даты start_date.
+    Создает разворотную таблицу tblPivotMonitoringIndex с номерами периодов в столбцах.
     """
     monitoring_prices = None
     with PostgresDB(ais_access) as db:
         monitoring_prices = _get_monitoring_history_prices_(db, start_date)
         ic(len(monitoring_prices))
     if monitoring_prices:
-        _save_monitoring_prices_sqlite_db(DB_FILE, monitoring_prices)
-        _create_pivot_monitoring_index(DB_FILE)
+        _save_monitoring_prices_sqlite_db(sqlite_db_file, monitoring_prices)
+        _create_pivot_monitoring_index(sqlite_db_file)
 
 
 if __name__ == "__main__":
     ic()
-    transfer_raw_monitoring_materials(PRICE_HISTORY_START_DATE)
+    get_monitoring_materials_from_larix(DB_FILE, PRICE_HISTORY_START_DATE)

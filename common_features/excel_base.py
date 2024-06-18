@@ -1,8 +1,7 @@
 import openpyxl
 
-
-from common_features import (
-    output_message_exit,
+from common_features.message import output_message_exit
+from common_features.files_features import (
     does_file_exist,
     is_file_in_use,
 )

@@ -1,3 +1,4 @@
+from icecream import ic
 from DB_support.db_config import SQLiteDB
 from config import (
     DB_FILE,
@@ -10,12 +11,14 @@ from config import (
 from DB_support.sql_sqlite_directories import sql_sqlite_directories
 from DB_support.sql_sqlite_periods import sql_sqlite_periods
 from DB_support.sql_sqlite_monitoring import sql_sqlite_monitoring
-from icecream import ic
+from DB_support.sql_sqlite_materials import sql_sqlite_materials
+
 
 def _create_periods_environment(db: SQLiteDB) -> int:
     """Создать инфраструктуру для Справочников. """
     db.go_execute(sql_sqlite_periods["delete_table_periods"])
     db.go_execute(sql_sqlite_periods["delete_index_periods"])
+    db.go_execute(sql_sqlite_periods["delete_view_periods"])
     #
     db.go_execute(sql_sqlite_periods["create_table_periods"])
     db.go_execute(sql_sqlite_periods["create_index_periods"])
@@ -35,16 +38,37 @@ def _create_directory_environment(db: SQLiteDB) -> int:
 
 def _create_monitoring_environment(db: SQLiteDB) -> int:
     """Инфраструктура для отчётов файлов мониторинга."""
+    # tblMonitoringFiles
     db.go_execute(sql_sqlite_monitoring["delete_table_monitoring_report_files"])
     db.go_execute(sql_sqlite_monitoring["create_table_monitoring_report_files"])
-    #
+    # tblMonitoringMaterialsReports
     db.go_execute(sql_sqlite_monitoring["delete_table_monitoring_reports"])
     db.go_execute(sql_sqlite_monitoring["create_table_monitoring_reports"])
     db.go_execute(sql_sqlite_monitoring["create_index_monitoring_reports"])
+    # tblHistoryPriceMaterials
+    db.go_execute(sql_sqlite_materials["delete_table_history_price_materials"])
+    db.go_execute(sql_sqlite_materials["create_table_history_price_materials"])
+    db.go_execute(sql_sqlite_materials["create_index_history_price_materials"])
+    # tblPivotIndexMaterials
+    db.go_execute(sql_sqlite_materials["delete_table_pivot_index_materials"])
+    db.go_execute(sql_sqlite_materials["create_table_pivot_index_materials"])
+    # tblExpandedMaterial
+    db.go_execute(sql_sqlite_materials["delete_table_expanded_material"])
+    db.go_execute(sql_sqlite_materials["create_table_expanded_material"])
+    db.go_execute(sql_sqlite_materials["create_index_expanded_material"])
+    # tblMonitoringHistoryPrices
+    db.go_execute(sql_sqlite_monitoring["delete_table_monitoring_history_prices"])
+    db.go_execute(sql_sqlite_monitoring["create_table_monitoring_history_prices"])
+    db.go_execute(sql_sqlite_monitoring["create_index_monitoring_history_prices"])
+    # tblPivotMonitoringIndex
+    db.go_execute(sql_sqlite_monitoring["delete_table_pivot_monitoring_index"])
+    db.go_execute(sql_sqlite_monitoring["create_table_pivot_monitoring_index"])
+
     return 0
 
 
-def create_tables_indexes(db_file: str) -> int:
+
+def _create_tables_indexes(db_file: str) -> int:
     """
     Создает таблицы:
         Справочников tblDirectories
@@ -58,7 +82,7 @@ def create_tables_indexes(db_file: str) -> int:
     return 0
 
 
-def fill_directories(db_file: str) -> int:
+def _fill_directories(db_file: str) -> int:
     """
     Заполняет таблицу tblDirectories
     (directory, name, description, parent_id)
@@ -79,15 +103,20 @@ def fill_directories(db_file: str) -> int:
         ic(message)
     return 0
 
+def create_support_db(db_file: str) -> int:
+    ic("Создаю Supporting_DB.sqlite3. Заполняю справочники.")
+    ic("Все данные уничтожаются!")
+    _create_tables_indexes(db_file)
+    _fill_directories(db_file)
+    return 0
+
+
+
 if __name__ == "__main__":
 
     db_name = DB_FILE
     ic(db_name)
-    # ic("создаю таблицы и индексы справочников и периодов")
-    # ic("все данные уничтожатся.")
-    # create_tables_indexes(db_name)
-    # fill_directories(db_name)
+    create_support_db(db_name)
 
-
-    with SQLiteDB(db_name) as db:
-        _create_monitoring_environment(db)
+    # with SQLiteDB(db_name) as db:
+    #     _create_monitoring_environment(db)

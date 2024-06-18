@@ -3,7 +3,7 @@ import itertools
 import re
 from fastnumbers import isfloat, isint
 from dateutil import parser
-
+from config import PERIOD_PATTERNS
 
 _re_compiled_patterns = {
     "wildcard": re.compile(r"[\t\n\r\f\v\s+]+"),
@@ -126,6 +126,37 @@ def code_to_number(src_code: str) -> int:
 def is_quote_code(code: str) -> bool:
     """Проверяет, совпадает ли код с шаблоном расценки."""
     return _re_compiled_patterns["quote_code"].match(code) is not None
+
+
+def extract_supplement_number(text: str) -> int | None:
+    """Извлекает номер дополнения из заданного текста.."""
+    match = re.match(PERIOD_PATTERNS["supplement_number"], text)
+    # return convert_to_integer(result.groups()[0])
+    return get_integer(match.group(1)) if match else None
+
+
+def extract_supplement_index_cmt(text: str) -> tuple[int, int, str] | None:
+    """Извлекает номера приложений и индексов из заданного текста."""
+    # 209 индекс/дополнение 71 (мониторинг Февраль 2024)
+    match = re.match(PERIOD_PATTERNS["index_number_supplement_cmt"], text)
+    if match:
+        index_number, supplement_number = (
+            get_integer(group) for group in match.groups()[:-1]
+        )
+        cmt = match.group(3)
+        return supplement_number, index_number, cmt
+    return None
+
+def extract_monitoring_supplement_index_cmt(text: str) -> tuple[int, int, str] | None:
+    """Извлекает номера приложений, индексов и комментарии из текста.
+    supplement_number, index_number, comment"""
+    # Мониторинг Сентябрь 2023 (204 сборник/дополнение 69)
+    match = re.match(PERIOD_PATTERNS["monitoring"], text)
+    if match:
+        comment = match.group(1)
+        index_number, supplement_number = match.group(2), match.group(3)
+        return supplement_number, index_number, comment
+    return None
 
 
 if __name__ == "__main__":

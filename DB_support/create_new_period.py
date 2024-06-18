@@ -4,7 +4,7 @@ from icecream import ic
 
 from DB_support.db_config import SQLiteDB
 from DB_support.sql_sqlite_periods import sql_sqlite_periods
-from DB_support.periods_export_1 import extract_monitoring_supplement_index_cmt
+from common_features import extract_monitoring_supplement_index_cmt
 from config import DB_FILE
 
 

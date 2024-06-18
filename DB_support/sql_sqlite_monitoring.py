@@ -111,7 +111,7 @@ sql_sqlite_monitoring = {
                 sheet_name      TEXT NOT NULL,
                 period_name     TEXT NOT NULL,
 
-                UNIQUE (report_file)
+                UNIQUE (period_id)
             );
         """,
     "insert_monitoring_files": """--sql
@@ -119,6 +119,12 @@ sql_sqlite_monitoring = {
             period_id, report_file, sheet_name, period_name
         )
         VALUES ( :period_id, :report_file, :sheet_name, :period_name);
+    """,
+    "select_monitoring_files_by_period_id": """--sql
+        select * from tblMonitoringFiles where period_id = :period_id;
+    """,
+    "delete_monitoring_files_by_period_id": """--sql
+        DELETE FROM tblMonitoringFiles WHERE period_id = :period_id;
     """,
 }
 

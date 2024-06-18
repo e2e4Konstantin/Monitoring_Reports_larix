@@ -8,14 +8,14 @@ sql_sqlite_materials = {
             product_type, code, digit_code, description, unit_measure,
             transport_code, transport_name, transport_base_price, transport_current_price, transport_inflation_rate,
             storage_cost_rate, storage_cost_name, storage_cost_description,
-            base_price, current_price, inflation_rate
+            base_price, current_price, inflation_rate, net_weight, gross_weight
         )
         VALUES (
             :period_larix_id, :period_name,
             :product_type, :code, :digit_code, :description, :unit_measure,
             :transport_code, :transport_name, :transport_base_price, :transport_current_price, :transport_inflation_rate,
             :storage_cost_rate, :storage_cost_name, :storage_cost_description,
-            :base_price, :current_price, :inflation_rate
+            :base_price, :current_price, :inflation_rate, :net_weight, :gross_weight
     );
     """,
     "delete_table_expanded_material": """DROP TABLE IF EXISTS tblExpandedMaterial;""",
@@ -29,6 +29,7 @@ sql_sqlite_materials = {
             --
             period_larix_id INTEGER,
             period_name TEXT,
+            period_id INTEGER DEFAULT NULL,
             --
             product_type TEXT,
             code TEXT,
@@ -46,9 +47,13 @@ sql_sqlite_materials = {
             storage_cost_name TEXT,
             storage_cost_description TEXT,
             --
-            base_price REAL,
-            current_price REAL,
-            inflation_rate REAL
+            base_price REAL DEFAULT 0.0,
+            current_price REAL DEFAULT 0.0,
+            inflation_rate REAL DEFAULT 0.0,
+            net_weight REAL DEFAULT 0.0,
+            gross_weight REAL DEFAULT 0.0,
+            --
+            FOREIGN KEY (period_id) REFERENCES tblPeriods (id)
         );
         """,
     "create_index_expanded_material": """--sql

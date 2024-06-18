@@ -9,14 +9,15 @@ sql_sqlite_periods = {
     #
     "delete_table_periods": """--sql
         DROP TABLE IF EXISTS tblPeriods;
-        """,
+    """,
     "delete_index_periods": """--sql
         DROP INDEX IF EXISTS idxPeriods;
-        """,
+    """,
     "delete_all_data_periods": """DELETE FROM tblPeriods;
-        """,
+    """,
     "delete_period_by_id": """DELETE FROM tblPeriods WHERE id=:period_id;
-        """,
+    """,
+    "delete_view_periods": """DROP VIEW IF EXISTS viewPeriods;""",
     "create_table_periods": """--sql
     /*
     Таблица для хранения периодов.

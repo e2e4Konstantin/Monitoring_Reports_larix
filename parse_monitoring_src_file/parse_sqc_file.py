@@ -3,7 +3,7 @@
 import pandas
 from icecream import ic
 #
-from config import DB_FILE
+
 from DB_support import (
     SQLiteDB,
     sql_sqlite_periods,
@@ -161,9 +161,13 @@ def take_monitoring_report_file_inventory(
     with SQLiteDB(db_file) as db:
         query = sql_sqlite_periods["select_by_id"]
         [period] = db.go_select(query, {"period_id": period_id})
-        ic(period["id"])
         period_name = period["comment"]
+        ic(period["id"], period_name)
 
+        db.go_execute(
+            sql_sqlite_monitoring["delete_monitoring_files_by_period_id"],
+            {"period_id": period_id}
+        )
         file_id = db.go_insert(
             sql_sqlite_monitoring["insert_monitoring_files"],
             {
@@ -177,6 +181,8 @@ def take_monitoring_report_file_inventory(
         return file_id
 
 def save_the_monitoring_report(db_file: str, period_id: int, file_id: int) -> int:
+    """Сохраняет данные о мониторинге из таблицы tblRawData
+    в таблицу tblMonitoringMaterialsReports."""
     with SQLiteDB(db_file) as db:
         db.go_select(
             sql_sqlite_monitoring["delete_data_for_period_id"], {"period_id": period_id}
@@ -199,32 +205,56 @@ def save_the_monitoring_report(db_file: str, period_id: int, file_id: int) -> in
     return 0
 
 
-if __name__ == "__main__":
-    ic()
-    # исходные данные
-    # src_material_path = r"C:\Users\kazak.ke\Documents\Tmp"
-    # src_file_name = "5_Отчет_апрель_2024_short.xlsx"
+def get_period_id_by_comment(db_file: str, period_comment: str) -> int | None:
+    """Возвращает id периода мониторинга по его комментарию."""
+    with SQLiteDB(db_file) as db:
+        query = sql_sqlite_periods["select_monitoring_by_comment"]
+        period = db.go_select(query, {"monitoring_comment": period_comment})
+    return period[0]["id"] if period else None
 
-    src_material_path = r"C:\Users\kazak.ke\Documents\Задачи\5_Надя\исходные_данные\материалы"
-    src_file_name = "6_Отчет май 2024.xlsx"
-    src_file = construct_absolute_file_path(src_material_path, src_file_name)
-    sheet_name = "приложение А"
+
+
+def load_monitoring_data_file(period_name: str, monitoring_file: str, sheet_name: str, db_file: str) -> int:
+    """Разбирает файл отчета мониторинга и сохраняет его в БД."""
+    period_id = get_period_id_by_comment(db_file, period_name)
+    if not period_id:
+        message = f"Не найден период {period_name!r} в таблице 'tblPeriods'"
+        output_message_exit(message, 'создай новый период мониторинга')
+    # записать в БД данные о файле отчета мониторинга
+    file_id = take_monitoring_report_file_inventory(
+        db_file, period_id, monitoring_file, sheet_name
+    )
+    ic(file_id)
+    # разобрать файл и записать в tblRawData sqlite
+    parse_monitoring_material_file(monitoring_file, sheet_name, db_file, "tblRawData")
+    # сохранить данные о мониторинге в таблицу tblMonitoringMaterialsReports
+    save_the_monitoring_report(db_file, period_id, file_id)
+    return 0
+
+if __name__ == "__main__":
+    from config import DB_FILE
+    from parse_monitoring_src_file.path_source_files import monitoring_src_paths
+
+    ic()
+    period_name = "Апрель 2024"    # "Тест_2024" #"Май 2024"
+    src_data = monitoring_src_paths[period_name]
+    # period_name = "Апрель 2024"
     #
-    # # создать новый период мониторинга
+    # создать новый период мониторинга
     # period_id = create_new_monitoring_period(
     #     DB_FILE,
     #     previous_period="Апрель 2024",
     #     period_name="Мониторинг Май 2024 (212 сборник/дополнение 72)",
     # )
-    #
-    # записать в БД данные о файле отчета мониторинга
-    # period_id = 70  # Апрель 2024
-    period_id = 126  # Май 2024
-    file_id = take_monitoring_report_file_inventory(DB_FILE, period_id, src_file, "приложение А")
 
-    # file_id = 1
-    ic(file_id)
-    # разобрать файл и записать в tblRawData sqlite
-    parse_monitoring_material_file(src_file, sheet_name, DB_FILE, "tblRawData")
-    # сохранить данные о мониторинге в таблицу tblMonitoringMaterialsReports
-    save_the_monitoring_report(DB_FILE, period_id, file_id)
+    # period_id = 70  # Апрель 2024
+    # period_id = 126  # Май 2024
+
+    load_monitoring_data_file(
+        period_name,
+        src_data["monitoring_file"],
+        src_data["sheet_name"],
+        db_file=DB_FILE,
+    )
+
+

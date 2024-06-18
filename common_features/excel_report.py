@@ -1,8 +1,9 @@
 
 from openpyxl.styles import Font, PatternFill, numbers, DEFAULT_FONT, Color, Alignment
-from config import ExcelBase
 from openpyxl.utils import get_column_letter
 from openpyxl.cell.cell import Cell
+
+from common_features.excel_base import ExcelBase
 
 
 class ExcelReport(ExcelBase):

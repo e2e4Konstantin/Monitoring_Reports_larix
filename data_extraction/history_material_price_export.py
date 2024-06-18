@@ -45,7 +45,7 @@ def create_materials_pivot_table_by_index_number(db_file: str):
             sql_sqlite_materials["select_unique_code_history_price_materials"]
         )
         codes = tuple([x["code"] for x in codes])
-        ic("всего шифров: ",len(codes))
+        ic("в tblHistoryPriceMaterials уникальных шифров: ", len(codes))
         indexes = db.go_select(
             sql_sqlite_materials["select_unique_index_number_history_price_materials"]
         )

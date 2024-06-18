@@ -3,14 +3,14 @@ from os import path
 DUCK_DB_FILE_NAME = "Supporting_DB.duck_db"
 DB_FILE_NAME = "Supporting_DB.sqlite3"
 DB_FILE_PATH = r"C:\Users\kazak.ke\Documents\PythonProjects\Monitoring_Reports_larix\DB_support"
+DB_FILE = path.join(DB_FILE_PATH, DB_FILE_NAME)
 #
-
 DUCK_DB_FILE = path.join(DB_FILE_PATH, DUCK_DB_FILE_NAME)
 #
-DB_FILE = path.join(DB_FILE_PATH, DB_FILE_NAME)
 RAW_DATA_TABLE_NAME = "tblRawData"
 
-CONFIG_FILE_NAME = "config_report.json"
+PERIOD_CSV_FILE_NAME = "larix_periods.csv"
+PERIOD_CSV_FILE = path.join(DB_FILE_PATH, PERIOD_CSV_FILE_NAME)
 
 TON_ORIGIN = "ТСН"     # TERRITORIAL OUTLAY NORMATIVE
 PNWC_ORIGIN = "НЦКР"   # PRICE NORMATIVE FOR WORK COMPLEXES

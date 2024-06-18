@@ -6,12 +6,14 @@ from icecream import ic
 
 #
 from config import (
+    ais_access,
     DatabaseAccess,
     PostgresDB,
     DB_FILE_PATH,
     RAW_DATA_TABLE_NAME,
     DB_FILE,
     PERIOD_PATTERNS,
+    PERIOD_CSV_FILE,
     TON_ORIGIN,
 )
 from sql_queries import sql_pg_export
@@ -24,6 +26,9 @@ from common_features import (
     get_integer,
     parse_date,
     date_to_numbers,
+    extract_supplement_number,
+    extract_supplement_index_cmt,
+    extract_monitoring_supplement_index_cmt,
 )
 
 
@@ -48,7 +53,7 @@ def _load_dataframe_to_database_table( df: pd.DataFrame, db_file: str, table_nam
         # dtype=pandas.StringDtype(),
         [result] = db.go_select(f"SELECT COUNT(*) AS count FROM {table_name};")
         count = result["count"]
-        message = f"Из df импортировано: {count} записей в {table_name!r}"
+        message = f"В таблицу {table_name!r} импортировано: {count} записей "
         ic(message)
     return 0
 
@@ -95,36 +100,6 @@ def _get_directory_id(db: SQLiteDB, directory_name: str, item_name: str) -> int 
         f"запись с именем: {item_name!r}.",
     )
 
-def _extract_supplement_number(text: str) -> int | None:
-    """Извлекает номер дополнения из заданного текста.."""
-    match = re.match(PERIOD_PATTERNS["supplement_number"], text)
-    # return convert_to_integer(result.groups()[0])
-    return get_integer(match.group(1)) if match else None
-
-
-def _extract_supplement_index_cmt(text: str) -> tuple[int, int, str] | None:
-    """Извлекает номера приложений и индексов из заданного текста."""
-    # 209 индекс/дополнение 71 (мониторинг Февраль 2024)
-    match = re.match(PERIOD_PATTERNS["index_number_supplement_cmt"], text)
-    if match:
-        index_number, supplement_number = (
-            get_integer(group) for group in match.groups()[:-1]
-        )
-        cmt = match.group(3)
-        return supplement_number, index_number, cmt
-    return None
-
-def extract_monitoring_supplement_index_cmt(text: str) -> tuple[int, int, str] | None:
-    """Извлекает номера приложений, индексов и комментарии из текста.
-    supplement_number, index_number, comment """
-    # Мониторинг Сентябрь 2023 (204 сборник/дополнение 69)
-    match = re.match(PERIOD_PATTERNS["monitoring"], text)
-    if match:
-        comment = match.group(1)
-        index_number, supplement_number = match.group(2), match.group(3)
-        return supplement_number, index_number, comment
-    return None
-
 
 def _insert_period(db: SQLiteDB, data) -> int | None:
     """Вставляет новый период в таблицу tblPeriods."""
@@ -138,7 +113,7 @@ def _extract_supplement_data_from_line(
 ) -> tuple:
     """Извлекает данные из строки  с периодом дополнение."""
     title = clean_text(line["title"])
-    supplement = _extract_supplement_number(title)
+    supplement = extract_supplement_number(title)
     date = parse_date(clean_text(line["date_start"]))
     comment = clean_text(line["cmt"])
     basic_id = line["id"]
@@ -288,7 +263,7 @@ def _extract_index_data_from_line(
 ) -> tuple:
     """Извлекает данные об индексе из строки."""
     title = clean_text(line["title"])
-    supplement_number, index_number, cmt = _extract_supplement_index_cmt(title)
+    supplement_number, index_number, cmt = extract_supplement_index_cmt(title)
     date = parse_date(clean_text(line["date_start"]))
     comment = clean_text(cmt)
     basic_id = line["id"]
@@ -383,7 +358,7 @@ def _monitoring_periods_parsing(db: SQLiteDB) -> int:
 
 
 
-def parsing_raw_periods_from_csv(csv_file: str, db_file: str) -> int:
+def _parsing_raw_periods_from_csv(csv_file: str, db_file: str) -> int:
     """
     Читает данные о периодах из csv-файла выгруженного из Postgres Normative
     larix.period в SQLite tblRawDat.  Удаляет все данные из таблицы
@@ -409,13 +384,15 @@ def parsing_raw_periods_from_csv(csv_file: str, db_file: str) -> int:
 
     return 0
 
-
-if __name__ == "__main__":
-    from config import ais_access
-    # для создания БД надо запустить create_support_db.py
-
-    csv_file_name = "pg_periods.csv"
-    csv_file = os.path.join(DB_FILE_PATH, csv_file_name)
+def get_periods_from_larix(db_file: str, csv_file: str) -> int:
+    """Экспортирует данные о периодах из таблицы larix.periods в таблицу tblPeriods."""
+    #
+    # для создания БД надо запустить DB_support.create_support_db.py
     #
     _export_table_periods_to_csv(csv_file, ais_access)
-    parsing_raw_periods_from_csv(csv_file, DB_FILE)
+    _parsing_raw_periods_from_csv(csv_file, db_file)
+    return 0
+
+if __name__ == "__main__":
+    #
+    get_periods_from_larix(DB_FILE, PERIOD_CSV_FILE)

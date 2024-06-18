@@ -1,5 +1,5 @@
 import sys
-from config.const import CONSOLE_COLORS
+from config import CONSOLE_COLORS
 
 
 def output_message(error_message: str, additional_info: str = None) -> None:

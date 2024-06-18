@@ -57,17 +57,17 @@ sql_pg_queries = {
             r.pressmark "code",
             r.title "description",
             uom.title "unit_measure",
-            r.netto,
-            r.brutto,
-            r.price "base_price",
-            r.cur_price "actual_price"
+            r.netto::float,
+            r.brutto::float,
+            r.price::float "base_price",
+            r.cur_price::float "actual_price"
             ,
             tc.pressmark "transport_code",
             tc.title "transport_name",
-            tc.price "transport_base_price",
-            tc.cur_price "transport_current_price"
+            tc.price::float "transport_base_price",
+            tc.cur_price::float "transport_current_price"
             ,
-            sc.rate "storage_rate",
+            sc.rate::float "storage_rate",
             sc.title "storage_name",
             sc.cmt "storage_description"
         FROM larix.resources r
