@@ -182,7 +182,7 @@ sql_sqlite_periods = {
         SELECT * FROM tblPeriods WHERE id = :period_id
         ;
     """,
-    "select_supplement_by_number": """--sql
+    "select_ton_supplement_by_number": """--sql
         WITH
             owner_row AS (
                 SELECT id FROM  tblDirectories WHERE directory = 'owners' AND name = 'TON'

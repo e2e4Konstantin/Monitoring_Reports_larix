@@ -44,6 +44,18 @@ sql_sqlite_monitoring = {
     "select_unique_index_number_monitoring_history_price": """--sql
         SELECT DISTINCT index_number FROM tblMonitoringHistoryPrices ORDER BY index_number;
     """,
+    "select_monitoring_history_price_for_code": """--sql
+        SELECT
+            code,
+            period_name,
+            index_number,
+            min_price AS price,
+            transport_included_in_price AS delivery
+        FROM tblMonitoringHistoryPrices
+        WHERE code = :code
+        ORDER BY index_number DESC;
+    """,
+    # ------------------------------------------------------------------------
     # Pivot
     "delete_table_pivot_monitoring_index": """DROP TABLE IF EXISTS tblPivotMonitoringIndex;""",
     "create_table_pivot_monitoring_index": """--sql
@@ -95,7 +107,8 @@ sql_sqlite_monitoring = {
         FROM tblMonitoringMaterialsReports
         WHERE period_id = :period_id
         ORDER BY digit_code
-;
+        LIMIT 5
+        ;
     """,
     # ------------------------------------------------------------------------
     # Файлы отчетов

@@ -3,15 +3,15 @@ from openpyxl.styles import Font, PatternFill, numbers, DEFAULT_FONT, Color, Ali
 from openpyxl.utils import get_column_letter
 from openpyxl.cell.cell import Cell
 
-from common_features.excel_base import ExcelBase
+from models.excel_base import ExcelBase
 
 
 class ExcelReport(ExcelBase):
-    def __init__(self, filename: str = None):
-        super().__init__(filename)
+    def __init__(self, file_name: str = None):
+        super().__init__(file_name)
         self.sheet_names = [
-            "transport",
-            "materials",
+            "Transport",
+            "Materials",
         ]
         self.colors = {
             "transport": "00FF9900",
@@ -44,8 +44,8 @@ class ExcelReport(ExcelBase):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.workbook:
-            self.save_file()
-        super().__exit__(exc_type, exc_val, exc_tb)
+            # self.save_file()
+            super().__exit__(exc_type, exc_val, exc_tb)
 
 
     def get_sheet(self, sheet_name: str, index: int = None):
@@ -109,7 +109,7 @@ class ExcelReport(ExcelBase):
             cell.value = header[col - 1]
             cell.font = self.fonts["default"]
             cell.fill = self.fills["header"]
-            cell.alignment = cell.alignment.copy(wrap_text=True)
+            cell.alignment = Alignment(wrap_text=True, vertical="bottom")
 
     def write_row(self, sheet_name: str, values: list, row_index: int = 2):
         """записывает строку в лист"""

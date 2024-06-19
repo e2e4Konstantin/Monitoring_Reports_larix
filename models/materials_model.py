@@ -3,7 +3,7 @@ from config import ROUNDING
 from models.product_model import Product, ProductType
 from models.transport_cost_model import TransportCost
 from models.storage_cost_model import StorageCost
-
+from models.monitoring_model import MonitoringMaterial
 
 class Material(Product, TransportCost):
     def __init__(
@@ -26,6 +26,7 @@ class Material(Product, TransportCost):
         storage_cost_rate: float = 0.0,
         storage_cost_name: str = None,
         storage_cost_description: str = None,
+        monitoring: MonitoringMaterial = None
     ):
         Product.__init__(
             self,
@@ -49,13 +50,36 @@ class Material(Product, TransportCost):
             if self.base_price > 0
             else 0.0
         )
+        self.monitoring: MonitoringMaterial = monitoring
+    def get_history_length(self) -> int | None:
+        """Возвращает длину истории цен."""
+        return len(self.monitoring.price_history) if self.monitoring.price_history else None
+
 
     def __repr__(self):
-        s1 = f"{type(self).__name__}({self.product_type!r}, {self.code!r}, {self.description!r}, {self.unit_measure!r}, {self.gross_weight}, {self.net_weight}, "
-        s2 = f"{self.base_price}, {self.current_price}, {self.inflation_rate}, "
-        s3 = f"{self.transport_code!r}, {self.transport_name!r}, {self.transport_base_price}, {self.transport_current_price}, {self.transport_inflation_rate}, "
-        s4 = f"{self.storage_cost_rate}, {self.storage_cost_name!r}, {self.storage_cost_description!r}"
-        return f"{type(self).__name__}({s1}{s2}{s3}{s4})"
+        repr_str = (
+            f"{self.__class__.__name__}("
+            f"product_type={self.product_type!r}, "
+            f"code={self.code!r}, "
+            f"description={self.description!r}, "
+            f"unit_measure={self.unit_measure!r}, "
+            f"gross_weight={self.gross_weight}, "
+            f"net_weight={self.net_weight}, "
+            f"base_price={self.base_price}, "
+            f"current_price={self.current_price}, "
+            f"inflation_rate={self.inflation_rate}, "
+            f"transport_code={self.transport_code!r}, "
+            f"transport_name={self.transport_name!r}, "
+            f"transport_base_price={self.transport_base_price}, "
+            f"transport_current_price={self.transport_current_price}, "
+            f"transport_inflation_rate={self.transport_inflation_rate}, "
+            f"storage_cost_rate={self.storage_cost_rate}, "
+            f"storage_cost_name={self.storage_cost_name!r}, "
+            f"storage_cost_description={self.storage_cost_description!r}, "
+            f"monitoring={self.monitoring}"
+            f")"
+        )
+        return repr_str
 
 
 if __name__ == "__main__":

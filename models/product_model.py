@@ -9,22 +9,15 @@ class ProductType(Enum):
 
 
 class Product(Code):
-    def __init__(
-        self,
-        product_type: ProductType,
-        product_code: str,
-        product_description: str,
-        unit_measure: str,
-    ):
+    def __init__(self, product_type: ProductType, code: str, description: str, unit_measure: str):
         self.product_type = product_type.value
-        Code.__init__(self, product_code)
-        self.description = product_description
+        super().__init__(code)
+        self.description = description
         self.unit_measure = unit_measure
 
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.product_type}, {self.code}, {self.digit_code}, {self.description}, {self.unit_measure})"
-
+        return f"{self.__class__.__name__}(product_type={self.product_type!r}, code={self.code!r}, description={self.description!r}, unit_measure={self.unit_measure!r})"
 if __name__ == "__main__":
     from icecream import ic
 
