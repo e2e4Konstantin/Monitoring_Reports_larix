@@ -2,22 +2,6 @@ sql_sqlite_materials = {
     # ----------------------------------------------------------------------
     # материалы в развернутом виде (по периодам Дополнения)
     # ----------------------------------------------------------------------
-    "insert_row_expanded_material": """--sql
-        INSERT INTO tblExpandedMaterial (
-            period_larix_id, period_name,
-            product_type, code, digit_code, description, unit_measure,
-            transport_code, transport_name, transport_base_price, transport_current_price, transport_inflation_rate,
-            storage_cost_rate, storage_cost_name, storage_cost_description,
-            base_price, current_price, inflation_rate, net_weight, gross_weight
-        )
-        VALUES (
-            :period_larix_id, :period_name,
-            :product_type, :code, :digit_code, :description, :unit_measure,
-            :transport_code, :transport_name, :transport_base_price, :transport_current_price, :transport_inflation_rate,
-            :storage_cost_rate, :storage_cost_name, :storage_cost_description,
-            :base_price, :current_price, :inflation_rate, :net_weight, :gross_weight
-    );
-    """,
     "delete_table_expanded_material": """DROP TABLE IF EXISTS tblExpandedMaterial;""",
     "delete_index_expanded_material": """DROP INDEX IF EXISTS idxExpandedMaterial;""",
     "delete_all_data_expanded_material": """DELETE FROM tblExpandedMaterial;""",
@@ -37,22 +21,6 @@ sql_sqlite_materials = {
             description TEXT,
             unit_measure TEXT,
             --
-            transport_code TEXT,
-            transport_name TEXT,
-            transport_base_price REAL,
-            transport_current_price REAL,
-            transport_inflation_rate REAL,
-            --
-            storage_cost_rate REAL,
-            storage_cost_name TEXT,
-            storage_cost_description TEXT,
-            --
-            base_price REAL DEFAULT 0.0,
-            current_price REAL DEFAULT 0.0,
-            inflation_rate REAL DEFAULT 0.0,
-            net_weight REAL DEFAULT 0.0,
-            gross_weight REAL DEFAULT 0.0,
-            --
             FOREIGN KEY (period_id) REFERENCES tblPeriods (id)
         );
         """,
@@ -61,6 +29,16 @@ sql_sqlite_materials = {
             code, digit_code
         );
         """,
+    "insert_row_expanded_material": """--sql
+        INSERT INTO tblExpandedMaterial (
+            period_larix_id, period_name, period_id,
+            product_type, code, digit_code, description, unit_measure
+        )
+        VALUES (
+            :period_larix_id, :period_name, :period_id,
+            :product_type, :code, :digit_code, :description, :unit_measure
+    );
+    """,
     "select_expanded_material_by_code_period_name": """--sql
         SELECT *
         FROM tblExpandedMaterial
@@ -79,12 +57,38 @@ sql_sqlite_materials = {
         CREATE TABLE tblHistoryPriceMaterials (
             -- таблица для хранения цен на Материалы для индексных периодов
             id INTEGER PRIMARY KEY NOT NULL,
+            index_number INTEGER, -- номер индексного периода
+            period_id INTEGER DEFAULT NULL,
             code TEXT,
             digit_code INTEGER,
             base_price REAL,
             current_price REAL,
-            index_number INTEGER
+            inflation_ratio REAL GENERATED ALWAYS AS (
+                CASE
+                    WHEN base_price = 0 THEN 0
+                    ELSE ROUND(current_price / base_price, 2)
+                END
+            ) VIRTUAL,
+            --
+            net_weight REAL DEFAULT 0.0,
+            gross_weight REAL DEFAULT 0.0,
+            --
+            transport_code TEXT,
+            transport_name TEXT,
+            transport_base_price REAL,
+            transport_current_price REAL,
+            transport_inflation_rate REAL GENERATED ALWAYS AS (
+                CASE
+                    WHEN transport_base_price = 0 THEN 0
+                    ELSE ROUND(transport_current_price / transport_base_price, 2)
+                END
+            ) VIRTUAL,
+            --
+            storage_cost_rate  REAL,
+            storage_cost_name TEXT,
+            storage_cost_description TEXT
         );
+
     """,
     "create_index_history_price_materials": """--sql
         CREATE INDEX idxHistoryPriceMaterials ON tblHistoryPriceMaterials (
@@ -93,9 +97,19 @@ sql_sqlite_materials = {
     """,
     "insert_row_history_price_materials": """--sql
         INSERT INTO tblHistoryPriceMaterials (
-            code, digit_code, base_price, current_price, index_number
+            index_number, period_id,
+            code, digit_code, base_price, current_price,
+            net_weight, gross_weight,
+            transport_code, transport_name, transport_base_price, transport_current_price,
+            storage_cost_rate, storage_cost_name, storage_cost_description
         )
-        VALUES ( ?, ?, ?, ?, ? );
+        VALUES (
+            :index_number, :period_id,
+            :code, :digit_code, :base_price, :current_price,
+            :net_weight, :gross_weight,
+            :transport_code, :transport_name, :transport_base_price, :transport_current_price,
+            :storage_cost_rate, :storage_cost_name, :storage_cost_description
+        );
     """,
     "select_all_history_price_materials": """--sql
         SELECT * FROM tblHistoryPriceMaterials ORDER BY digit_code;

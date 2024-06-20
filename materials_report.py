@@ -6,9 +6,7 @@ from report_tools import (
     create_line_material,
 )
 from models import ExcelReport
-from models import Material
-
-from config import DB_FILE
+# from models import Material
 
 
 
@@ -41,13 +39,15 @@ def create_material_monitoring_report(
             value_row = create_line_material(material, row, max_history_len)
             value_row[0] = i + 1
             file.write_row(sheet_name, value_row, row)
-    #         file.write_material_format(sheet_name, row, max_history_len)
-    #         row += 1
+            file.write_material_format(sheet_name, row, max_history_len)
+            row += 1
     return 0
 
 
 
 if __name__ == "__main__":
+    from config import DB_FILE
+
     ic()
     # 1. создать БД create_new_support_db.py
     # 2. прочитать данные для периода read_prepare_larix_data.py

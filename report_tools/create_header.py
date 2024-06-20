@@ -8,11 +8,12 @@ def create_header(table: list[Material], view_history_depth: int) -> str:
         "No",
         "шифр",
         "название",
-        "базовая стоимость",
-        # история мониторинга
+        "базовая\nстоимость",
+        #
+        # -- история мониторинга
         "прошлый период транспорт включен",
-        "нужна проверка",
-        "мониторинг цена",  # monitoring price
+        "нужна\nпроверка",
+        "мониторинг\nцена поставщика",  # monitoring price
         "транспорт включен",  # transport flag
         "шифр транспорта",  # transport code
         "транспорт базовая цена",  # transport base price
@@ -20,6 +21,7 @@ def create_header(table: list[Material], view_history_depth: int) -> str:
         "транспорт текущая цена",  # transport actual price
         #
         "вес брутто",  # gross weight
+        "ед.изм",
     ]
     header_calculated = [
         ".",
@@ -54,5 +56,11 @@ def create_header(table: list[Material], view_history_depth: int) -> str:
             ]
             # ic(history_header)
             break
-    final_header = [*header[:4], *history_header, *header[4:], *header_calculated]
+    history_start = 4
+    final_header = [
+        *header[:history_start],
+        *history_header,
+        *header[history_start:],
+        *header_calculated,
+    ]
     return final_header, max_history_len

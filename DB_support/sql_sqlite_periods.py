@@ -198,4 +198,7 @@ sql_sqlite_periods = {
             AND supplement_number = :supplement_number
         ;
     """,
+    "select_by_larix_id": """--sql
+        SELECT * FROM tblPeriods WHERE database_id = :larix_period_id;
+    """,
 }

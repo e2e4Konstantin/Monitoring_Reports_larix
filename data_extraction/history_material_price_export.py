@@ -2,21 +2,48 @@ import sqlite3
 from icecream import ic
 
 from DB_support.sql_sqlite_materials import sql_sqlite_materials
+from DB_support.sql_sqlite_periods import sql_sqlite_periods
 from DB_support.db_config import SQLiteDB
 from psycopg2.extras import DictRow as pg_DictRow
-from common_features import code_to_number
+from common_features import code_to_number, output_message_exit
 
 
-def _prepare_history_price_material_data(price: sqlite3.Row) -> tuple:
-    result = (
-        price["code"],
-        code_to_number(price["code"]),
-        price["base_price"],
-        price["current_price"],
-        price["index_number"],
+def _get_sqlite_period_by_larix_period_id(db: SQLiteDB, larix_period_id: int) -> sqlite3.Row | None:
+    """Возвращает данные о периоде по larix_period_id."""
+    result = db.go_select(
+        sql_sqlite_periods["select_by_larix_id"],
+        {"larix_period_id": larix_period_id},
     )
-    return result
+    return result[0] if result else None
 
+
+def _prepare_history_price_material_data(db: SQLiteDB, price: pg_DictRow) -> tuple:
+    """Преобразует данные из pg_DictRow в кортеж для SQLiteDB."""
+    larix_period_id = price["larix_period_id"]
+    period = _get_sqlite_period_by_larix_period_id(db, larix_period_id)
+    if not period:
+        output_message_exit(
+            "В таблице 'tblPeriods'", f"Не найден период: {larix_period_id=}"
+        )
+    data = {
+        "code": price["code"],
+        "base_price": price["base_price"],
+        "current_price": price["current_price"],
+        "index_number": price["index_number"],
+        "net_weight": price["net_weight"],
+        "gross_weight": price["gross_weight"],
+        "transport_code": price["transport_code"],
+        "transport_name": price["transport_name"],
+        "transport_base_price": price["transport_base_price"],
+        "transport_current_price": price["transport_current_price"],
+        "storage_cost_rate": price["storage_rate"],
+        "storage_cost_name": price["storage_name"],
+        "storage_cost_description": price["storage_description"],
+        #
+        "period_id": period["id"],
+        "digit_code": code_to_number(price["code"]),
+    }
+    return data
 
 
 def save_materials_history_prices_sqlite_db(
@@ -31,7 +58,7 @@ def save_materials_history_prices_sqlite_db(
         db.go_execute(sql_sqlite_materials["create_index_history_price_materials"])
         #
         for price in list_of_prices:
-            data = _prepare_history_price_material_data(price)
+            data = _prepare_history_price_material_data(db, price)
             db.go_execute(
                 sql_sqlite_materials["insert_row_history_price_materials"], data
             )

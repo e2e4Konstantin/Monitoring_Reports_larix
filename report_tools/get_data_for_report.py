@@ -110,7 +110,7 @@ def _material_constructor(
         code=monitoring_material["code"],
         period_name=monitoring_period_name,
         supplier_price=monitoring_material["supplier_price"],
-        is_transport_included=bool(monitoring_material["delivery"]),
+        is_transport_included=not monitoring_material["delivery"] == "False",
         description=monitoring_material["description"],
         #
         price_history=price_history if price_history else [],
@@ -162,7 +162,7 @@ def _get_monitoring_materials_with_history_price(
 
 
 def get_materials_monitoring_data(period_name: str, db_file: str) -> list[Material] | None:
-    """Получает список моделей материалов мониторинга с историей цен."""
+    """Получает список материалов мониторинга с историей цен."""
     monitoring_period = _get_monitoring_period_by_comment(db_file, period_name)
     supplement_number = monitoring_period["supplement_number"]
     supplement_period = _get_supplement_period_by_number(db_file, supplement_number)

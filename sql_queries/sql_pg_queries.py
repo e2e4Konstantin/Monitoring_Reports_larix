@@ -56,25 +56,10 @@ sql_pg_queries = {
             tr.title "type" ,
             r.pressmark "code",
             r.title "description",
-            uom.title "unit_measure",
-            r.netto::float,
-            r.brutto::float,
-            r.price::float "base_price",
-            r.cur_price::float "actual_price"
-            ,
-            tc.pressmark "transport_code",
-            tc.title "transport_name",
-            tc.price::float "transport_base_price",
-            tc.cur_price::float "transport_current_price"
-            ,
-            sc.rate::float "storage_rate",
-            sc.title "storage_name",
-            sc.cmt "storage_description"
+            uom.title "unit_measure"
         FROM larix.resources r
         JOIN larix.type_resource tr on tr.id = r.type_resource
         JOIN larix.unit_of_measure uom on uom.id=r.unit_of_measure
-        JOIN larix.transport_cost tc ON tc.id = r.transport_cost AND tc."period" = %(period_id)s
-        JOIN larix.storage_cost sc ON sc.id = r.storage_cost AND sc."period" = %(period_id)s
         JOIN larix.period p on p.id=r.period
         WHERE
             r."period" = %(period_id)s
@@ -139,7 +124,7 @@ sql_pg_queries = {
     #
     "select_prices_all_materials_for_target_periods": """--sql
         /*
-        получить историю цен ВСЕХ материалов по material_id
+        получить историю цен ВСЕХ материалов
         для индексных периодов начиная с даты создания date_start
         */
         WITH target_periods AS (
@@ -159,20 +144,34 @@ sql_pg_queries = {
         )
         SELECT
             r.pressmark "code",
-            r.price::float "base_price",
+            r.price ::float "base_price",
             r.cur_price::float "current_price",
-            TRIM(SUBSTRING(tp."period_name", 1, 4))::int AS "index_number"
-            --,
+            TRIM(SUBSTRING(tp."period_name", 1, 4))::int AS "index_number",
+            r.netto ::float "net_weight",
+            r.brutto ::float "gross_weight",
+            --
+            tc.pressmark "transport_code",
+		    tc.title "transport_name",
+		    tc.price ::float "transport_base_price",
+		    tc.cur_price ::float "transport_current_price",
+		    --
+		    sc.rate ::float "storage_rate",
+		    sc.title "storage_name",
+		    sc.cmt "storage_description",
+            r."period" "larix_period_id"
             -- r.pressmark_sort "digit_code"
         FROM larix.resources r
         JOIN target_periods tp ON tp.period_id = r."period"
+        --
+        JOIN larix.transport_cost tc ON tc.id = r.transport_cost AND tc."period" = r.period
+		JOIN larix.storage_cost sc ON sc.id = r.storage_cost AND sc."period" = r.period
         WHERE
             --id IN (27054238,27054240,27054242,27054244,27054246) AND
             r.deleted = 0
             AND r.pressmark LIKE '1.%%'
             AND r.pressmark NOT LIKE '1.0%%'--
         ORDER BY r.pressmark_sort, tp.start_date ASC
-        --LIMIT 30
+        --LIMIT 35
         ;
     """,
     "select_monitoring_min_prices_for_periods_starting_date": """--sql
