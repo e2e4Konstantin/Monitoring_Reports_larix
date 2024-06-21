@@ -64,6 +64,7 @@ def _save_monitoring_prices_sqlite_db(
 def _create_pivot_monitoring_index(db_file: str):
     """Создает разворотную таблицу tblPivotMonitoringIndex с ценами по шифру и
     с номерами индексных периодов в названиях столбцов."""
+    ic()
     with SQLiteDB(db_file) as db:
         codes = db.go_select(
             sql_sqlite_monitoring["select_unique_code_monitoring_history_price"]
@@ -78,7 +79,7 @@ def _create_pivot_monitoring_index(db_file: str):
         ic("всего периодов: ", len(indexes))
         ic("первый индексный период: ", tuple(indexes[0]))
         columns = [str(x["index_number"]) for x in indexes]
-        ic(columns)
+        # ic(columns)
 
         db.go_execute(sql_sqlite_monitoring["delete_table_pivot_monitoring_index"])
         db.go_execute(sql_sqlite_monitoring["create_table_pivot_monitoring_index"])

@@ -183,6 +183,7 @@ def take_monitoring_report_file_inventory(
 def save_the_monitoring_report(db_file: str, period_id: int, file_id: int) -> int:
     """Сохраняет данные о мониторинге из таблицы tblRawData
     в таблицу tblMonitoringMaterialsReports."""
+    ic()
     with SQLiteDB(db_file) as db:
         db.go_select(
             sql_sqlite_monitoring["delete_data_for_period_id"], {"period_id": period_id}
@@ -202,6 +203,8 @@ def save_the_monitoring_report(db_file: str, period_id: int, file_id: int) -> in
                 sql_sqlite_monitoring["insert_monitoring_item"], data,
                 message=f"добавляем данные о материале {line['code']} в таблицу tblMonitoringMaterialsReports"
             )
+    message = "Данные из файла мониторинга сохранены в таблицу tblMonitoringMaterialsReports"
+    ic(message)
     return 0
 
 
