@@ -198,6 +198,24 @@ sql_sqlite_periods = {
             AND supplement_number = :supplement_number
         ;
     """,
+    # 
+    "select_ton_index_by_number": """--sql
+        WITH
+            owner_row AS (
+                SELECT id FROM  tblDirectories WHERE directory = 'owners' AND name = 'TON'
+            ),
+            period_type_row AS (
+                SELECT id FROM  tblDirectories WHERE directory = 'period_types'  AND name = 'index'
+            )
+        SELECT *
+        FROM tblPeriods
+        WHERE
+            owner_id = (SELECT id FROM owner_row)
+            AND period_type_id = (SELECT id FROM period_type_row)
+            AND index_number = :index_number
+        ;
+    """,
+    # 
     "select_by_larix_id": """--sql
         SELECT * FROM tblPeriods WHERE database_id = :larix_period_id;
     """,

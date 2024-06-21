@@ -1,8 +1,8 @@
-from models import Material
+from models import MonitoringMaterial
 from icecream import ic
 
 
-def create_header(table: list[Material], view_history_depth: int) -> str:
+def create_header(table: list[MonitoringMaterial], view_history_depth: int) -> str:
     """Создать заголовок таблицы отчета."""
     header = [
         "No",
@@ -52,7 +52,7 @@ def create_header(table: list[Material], view_history_depth: int) -> str:
             # ic(material.monitoring.price_history[-max_history_len:])
             history_header = [
                 x.period_name
-                for x in material.monitoring.price_history[-max_history_len:]
+                for x in material.monitoring_price_history[-max_history_len:]
             ]
             # ic(history_header)
             break

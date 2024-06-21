@@ -9,7 +9,7 @@ from DB_support import (
     sql_sqlite_materials,
     create_new_monitoring_period,
 )
-from models import MonitoringMaterial, ProductType, MaterialIndexData, MonitoringPrice
+from models import Material, MonitoringPrice, MonitoringMaterial, ProductType
 from common_features import output_message_exit
 
 
@@ -48,34 +48,17 @@ def _get_supplement_period_by_number(
         return period[0]
 
 
-def _get_index_period_by_number(db_file: str, index_number: int) -> sqlite3.Row | None:
-    """Возвращает индексный период по номеру индекса."""
-    with SQLiteDB(db_file) as db:
-        period = db.go_select(
-            sql_sqlite_periods["select_ton_index_by_number"],
-            {"index_number": index_number},
-        )
-        if not period:
-            output_message_exit(
-                "В таблице 'tblPeriods'",
-                f"Не найден индексный период: {index_number}",
-            )
-        return period[0]
-
-
-
-
 def _get_supplement_material(
-    db: SQLiteDB, supplement_period_id: int, code: str
+    db: SQLiteDB, supplement_name: str, code: str
 ) -> sqlite3.Row | None:
     """Ищет в таблице материалов tblExpandedMaterial для дополнения и коду."""
-    query = sql_sqlite_materials["select_expanded_material_by_code_period_id"]
+    query = sql_sqlite_materials["select_expanded_material_by_code_period_name"]
     # ic(query)
-    result = db.go_select(query, {"period_id": supplement_period_id, "code": code})
+    result = db.go_select(query, {"period_name": supplement_name, "code": code})
     if not result:
         output_message_exit(
             f"В 'tblExpandedMaterial' не найден материал {code!r}",
-            f"для дополнения: {supplement_period_id=}",
+            f"для дополнения  {supplement_name!r}",
         )
     return result[0]
 
@@ -106,118 +89,86 @@ def _get_monitoring_material_price_history(
     return history
 
 
-def _get_material_index_data(db: SQLiteDB, period_id: int, code: str) -> sqlite3.Row | None:
-    """Ищет в таблице материалов tblHistoryPriceMaterials для period_id и code."""
-    result = db.go_select(
-        sql_sqlite_materials["select_history_price_materials_period_id_code"], 
-        {"period_id": period_id, "product_code": code}
-        )
-    if not result:
-        output_message_exit(
-            f"В 'tblHistoryPriceMaterials' не найден материал {code!r}",
-            f"для периода: {period_id=}",
-        )
-    return result[0]
-
 def _material_constructor(
     db: SQLiteDB,
-    supplement_period_id: int,
-    index_period_id: int,
-    monitoring_material: sqlite3.Row
-) -> MonitoringMaterial:
+    supplement_period: sqlite3.Row,
+    monitoring_material: sqlite3.Row,
+    monitoring_period_name: int,
+) -> Material:
     """
     Ищет материал в tblExpandedMaterial по коду из отчета мониторинга и периоду дополнения.
     Получает историю цен и флаги доставки материал мониторинга по шифру.
     Заполняет объект Material."""
-    material_code = monitoring_material["code"]
-    # 
-    # найти материал из Дополнения supplement_period
     supplement_material = _get_supplement_material(
-        db, supplement_period_id, material_code
+        db, supplement_period["name"], monitoring_material["code"]
     )
-    # получить цены на материал для индексного периода
-    materials_index_price = _get_material_index_data(
-        db, index_period_id, material_code
+    price_history = _get_monitoring_material_price_history(
+        db, monitoring_material["code"]
     )
-    # получить историю цен Мониторинга на материал для индексного периода
-    monitoring_price_history = _get_monitoring_material_price_history(
-        db, material_code
-    )
-    index_period_material_data = MaterialIndexData(
-        base_price = materials_index_price["base_price"],
-        current_price = materials_index_price["current_price"],
-        inflation_rate = materials_index_price["inflation_ratio"],
+
+    monitoring_data = MonitoringMaterial(
+        code=monitoring_material["code"],
+        period_name=monitoring_period_name,
+        supplier_price=monitoring_material["supplier_price"],
+        is_transport_included=not monitoring_material["delivery"] == "False",
+        description=monitoring_material["description"],
         #
-        net_weight = materials_index_price["net_weight"],
-        gross_weight = materials_index_price["gross_weight"],
-        # 
-        transport_code=materials_index_price["transport_code"],
-        transport_name=materials_index_price["transport_name"],
-        transport_base_price=materials_index_price["transport_base_price"],
-        transport_current_price=materials_index_price["transport_current_price"],
-        #
-        storage_cost_rate=materials_index_price["storage_cost_rate"],
-        storage_cost_name=materials_index_price["storage_cost_name"],
-        storage_cost_description=materials_index_price["storage_cost_description"],
+        price_history=price_history if price_history else [],
     )
-    # ic(index_period_material_data)
-    monitoring_model = MonitoringMaterial(
+
+    material = Material(
         product_type=ProductType.MATERIAL,
         product_code=supplement_material["code"],
         product_description=supplement_material["description"],
         unit_measure=supplement_material["unit_measure"],
-        #         
-        supplier_price=monitoring_material["supplier_price"],
-        is_delivery_included=not monitoring_material["delivery"] == "False",
-        monitoring_description=monitoring_material["description"],
         #
-        monitoring_price_history=monitoring_price_history if monitoring_price_history else [],
-        index_period_material_data=index_period_material_data
+        net_weight=supplement_material["net_weight"],
+        gross_weight=supplement_material["gross_weight"],
+        base_price=supplement_material["base_price"],
+        current_price=supplement_material["current_price"],
+        #
+        transport_code=supplement_material["transport_code"],
+        transport_name=supplement_material["transport_name"],
+        transport_base_price=supplement_material["transport_base_price"],
+        transport_current_price=supplement_material["transport_current_price"],
+        #
+        storage_cost_rate=supplement_material["storage_cost_rate"],
+        storage_cost_name=supplement_material["storage_cost_name"],
+        storage_cost_description=supplement_material["storage_cost_description"],
+        monitoring=monitoring_data,
     )
-    return monitoring_model
+    return material
 
 
 def _get_monitoring_materials_with_history_price(
     db_file: str,
-    monitoring_period_id: int,
-    supplement_period_id: int,
-    index_period_id: int
-) -> list[MonitoringMaterial] | None:
+    monitoring_period: sqlite3.Row,
+    supplement_period: sqlite3.Row,
+) -> list[Material] | None:
     """Создать список материалов по отчету мониторинга."""
     with SQLiteDB(db_file) as db:
         # tblMonitoringMaterialsReports
         monitoring_materials = db.go_select(
             sql_sqlite_monitoring["select_monitoring_materials_for_period_id"],
-            {"period_id": monitoring_period_id},
+            {"period_id": monitoring_period["id"]},
         )
         table = [
             _material_constructor(
-                db, supplement_period_id, index_period_id, monitoring_material
+                db, supplement_period, monitoring_material, monitoring_period["name"]
             )
             for monitoring_material in monitoring_materials
         ]
     return table if table else None
 
 
-def get_materials_monitoring_data(period_name: str, db_file: str) -> list[MonitoringMaterial] | None:
+def get_materials_monitoring_data(period_name: str, db_file: str) -> list[Material] | None:
     """Получает список материалов мониторинга с историей цен."""
     monitoring_period = _get_monitoring_period_by_comment(db_file, period_name)
-    # 
     supplement_number = monitoring_period["supplement_number"]
     supplement_period = _get_supplement_period_by_number(db_file, supplement_number)
-    # 
-    index_period_number = monitoring_period["index_number"]
-    index_period = _get_index_period_by_number(db_file, index_period_number)
     #
-    monitoring_period_id = monitoring_period["id"]
-    supplement_period_id = supplement_period["id"] 
-    index_period_id = index_period["id"]
-    ic(monitoring_period_id)
-    ic(supplement_period_id)
-    ic(index_period_id) 
-    # выбрать материалы мониторинга с историей цен мониторинга и данными о цене из индексного периода
     table = _get_monitoring_materials_with_history_price(
-        db_file, monitoring_period_id, supplement_period_id, index_period_id
+        db_file, monitoring_period, supplement_period
     )
     return table
 

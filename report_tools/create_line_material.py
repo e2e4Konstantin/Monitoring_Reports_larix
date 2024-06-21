@@ -1,6 +1,6 @@
 from icecream import ic
 from openpyxl.utils import get_column_letter
-from models import Material, MonitoringPrice
+from models import MonitoringMaterial, MonitoringPrice
 import itertools
 
 def create_price_history_range(
@@ -18,16 +18,18 @@ def create_price_history_range(
 
 
 
-def create_line_material(material: Material, row_number: int, max_history_len: int):
+def create_line_material(material: MonitoringMaterial, row_number: int, max_history_len: int):
     """ Создать строку с данными о материале."""
+    index_data = material.index_period_material_data
+    # 
     price_range = create_price_history_range(
-        material.monitoring.price_history, max_history_len
+        material.monitoring_price_history, max_history_len
     )
     pos = {
         "row_count": [1, 0],
         "code": [2, material.code],
         "name": [3, material.description],
-        "base_price": [4, material.base_price],
+        "base_price": [4, index_data.base_price],
         #
         "history range": [5, price_range],
     }
@@ -35,31 +37,31 @@ def create_line_material(material: Material, row_number: int, max_history_len: i
     # транспорт последнего  истории периода
     pos["last_period_delivery"] = [
         history_end_column + 1,
-        "+" if material.monitoring.price_history[-1].delivery else "",
+        "+" if material.monitoring_price_history[-1].delivery else "",
     ]
     pos["check_need"] = [
         history_end_column + 2,
-        1 if material.monitoring.is_transport_included != material.monitoring.price_history[-1].delivery else "",
+        1 if material.is_delivery_included != material.monitoring_price_history[-1].delivery else "",
     ]
-    pos["supplier_price"] = [history_end_column + 3, material.monitoring.supplier_price]
-    pos["is_transport_included"] = [
+    pos["supplier_price"] = [history_end_column + 3, material.supplier_price]
+    pos["is_delivery_included"] = [
         history_end_column + 4,
-        "+" if material.monitoring.is_transport_included else "",
+        "+" if material.is_delivery_included else "",
     ]
-    pos["transport_code"] = [history_end_column + 5, material.transport_code]
+    pos["transport_code"] = [history_end_column + 5, index_data.transport_code]
     pos["transport_base_price"] = [
         history_end_column + 6,
-        material.transport_base_price,
+        index_data.transport_base_price,
     ]
     pos["transport_numeric_ratio"] = [
         history_end_column + 7,
-        material.transport_inflation_rate,
+        index_data.transport_inflation_rate,
     ]
     pos["transport_actual_price"] = [
         history_end_column + 8,
-        material.transport_current_price,
+        index_data.transport_current_price,
     ]
-    pos["gross_weight"] = [history_end_column + 9, material.gross_weight]
+    pos["gross_weight"] = [history_end_column + 9, index_data.gross_weight]
     pos["unit_measure"] = [history_end_column + 10, material.unit_measure]
     pos["empty_1"] = [history_end_column + 11, ""]
     # формулы
@@ -79,7 +81,7 @@ def create_line_material(material: Material, row_number: int, max_history_len: i
     # формулы
     # formulas = [
     #     f"={pos['transport_base_price'][2]}{row_number}*{pos['transport_numeric_ratio'][2]}{row_number}*{pos['gross_weight'][2]}{row_number}/1000",
-    #     f"=ROUND(IF({pos['transport_flag'][2]}{row_number}, ({pos['monitoring_price'][2]}{row_number}-{pos['transport_price'][2]}{row_number}), {pos['monitoring_price'][2]}{row_number}),2)",
+    #     f"=ROUND(IF({pos['is_delivery_included'][2]}{row_number}, ({pos['monitoring_price'][2]}{row_number}-{pos['transport_price'][2]}{row_number}), {pos['monitoring_price'][2]}{row_number}),2)",
     #     f"={pos['actual_price'][2]}{row_number}/{pos['base_price'][2]}{row_number}",
     #     f"={pos['result_price'][2]}{row_number}/{pos['base_price'][2]}{row_number}",
     #     f"={pos['result_index'][2]}{row_number}-{pos['previous_index'][2]}{row_number}",

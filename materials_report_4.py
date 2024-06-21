@@ -24,18 +24,15 @@ def create_material_monitoring_report(
     with ExcelReport(report_file_name) as file:
         sheet = file.get_sheet(sheet_name, 0)
         file.delete_sheets(["Sheet", "Таблица 1"])
-        #
         file.workbook.active = sheet
         #
-
         header, max_history_len = create_header(
             materials_monitoring, view_history_depth
         )
-        ic(max_history_len, header)
+        # ic(max_history_len, header)
         file.write_header(sheet.title, header)
         row = 2
         for i, material in enumerate(materials_monitoring):
-            ic(i)
             value_row = create_line_material(material, row, max_history_len)
             value_row[0] = i + 1
             file.write_row(sheet_name, value_row, row)

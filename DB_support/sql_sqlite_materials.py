@@ -39,12 +39,12 @@ sql_sqlite_materials = {
             :product_type, :code, :digit_code, :description, :unit_measure
     );
     """,
-    "select_expanded_material_by_code_period_name": """--sql
+    "select_expanded_material_by_code_period_id": """--sql
         SELECT *
         FROM tblExpandedMaterial
         WHERE
-            period_name = :period_name AND
-            code = :code
+            period_id = :period_id 
+            AND code = :code
         ;
         """,
     # ----------------------------------------------------------------------
@@ -117,6 +117,11 @@ sql_sqlite_materials = {
     "select_code_history_price_materials": """--sql
         SELECT * FROM tblHistoryPriceMaterials where code = ? ORDER BY index_number;
     """,
+    "select_history_price_materials_period_id_code": """--sql
+        SELECT * FROM tblHistoryPriceMaterials 
+        WHERE period_id = :period_id AND code = :product_code;
+    """,
+
     "select_unique_code_history_price_materials": """--sql
         SELECT DISTINCT code FROM tblHistoryPriceMaterials ORDER BY digit_code;
     """,
