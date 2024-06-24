@@ -1,7 +1,11 @@
+from typing import Any
 from icecream import ic
 from openpyxl.utils import get_column_letter
 from models import MonitoringMaterial, MonitoringPrice
 import itertools
+
+from report_tools.line_item_position_config import ITEM_POSITION
+
 
 def create_price_history_range(
     monitoring_prices: list[MonitoringPrice] = None, max_length: int = 0
@@ -15,93 +19,131 @@ def create_price_history_range(
         return prices[-max_length:]
     return empty_range[:len(prices)] + prices
 
+def _set_new_value(item_name: str, field_to_update: str, value: Any) -> None:
+    """Устанавливает значение  в словаре ITEM_POSITION для заданного элемента."""
+    if hasattr(ITEM_POSITION[item_name], field_to_update):
+        ITEM_POSITION[item_name] = ITEM_POSITION[item_name]._replace(**{field_to_update: value})
+
+
+
+
+
+def _set_items_position() -> None:
+    """ 
+    Устанавливает значение позиций элементов в словаре ITEM_POSITION.
+    Назначает букву для столбца
+    """
+    price_range = ITEM_POSITION["price_history_range"].value
+    history_end_column = ITEM_POSITION["price_history_range"].column_number + len(price_range)-1
+    # 
+    _set_new_value("last_period_delivery", "column_number", history_end_column + 1)
+    
+    # 
+    _set_new_value("check_need", "column_number", history_end_column + 2)
+    _set_new_value("supplier_price", "column_number", history_end_column + 3)
+    _set_new_value("is_delivery_included", "column_number", history_end_column + 4)
+    _set_new_value("transport_code", "column_number", history_end_column+5)
+    _set_new_value("transport_base_price", "column_number", history_end_column+6)
+    _set_new_value("transport_numeric_ratio", "column_number", history_end_column+7)
+    _set_new_value("transport_actual_price", "column_number", history_end_column+8)
+    _set_new_value("gross_weight", "column_number", history_end_column+9)
+    _set_new_value("unit_measure", "column_number", history_end_column+10)
+    _set_new_value("empty_1", "column_number", history_end_column+11)
+    _set_new_value("transport_price", "column_number", history_end_column+12)
+    _set_new_value("result_price", "column_number", history_end_column+13)
+    _set_new_value("previous_index", "column_number", history_end_column+14)
+    _set_new_value("result_index", "column_number", history_end_column+15)
+    _set_new_value("index_change_absolute", "column_number", history_end_column+16)
+    _set_new_value("index_change_in percentage", "column_number", history_end_column+17)
+    # 
+    _set_new_value("empty_2", "column_number", history_end_column+18)
+    _set_new_value("abbe_criterion", "column_number", history_end_column+19)
+    _set_new_value("absolute_price_change", "column_number", history_end_column+20)
+    # добавляем букву для номера колонки
+    for key in ITEM_POSITION.keys():
+        _set_new_value(key, "column_letter", get_column_letter(ITEM_POSITION[key].column_number))
+
 
 
 
 def create_line_material(material: MonitoringMaterial, row_number: int, max_history_len: int):
     """ Создать строку с данными о материале."""
     index_data = material.index_period_material_data
+    _set_new_value("row_count", "value", row_number)
+    _set_new_value("code", "value", material.code)
+    _set_new_value("name", "value", material.description)
+    _set_new_value("base_price", "value", index_data.base_price)
     # 
     price_range = create_price_history_range(
         material.monitoring_price_history, max_history_len
     )
-    pos = {
-        "row_count": [1, 0],
-        "code": [2, material.code],
-        "name": [3, material.description],
-        "base_price": [4, index_data.base_price],
-        #
-        "history range": [5, price_range],
-    }
-    history_end_column = pos["history range"][0] + len(price_range)-1
-    # транспорт последнего  истории периода
-    pos["last_period_delivery"] = [
-        history_end_column + 1,
-        "+" if material.monitoring_price_history[-1].delivery else "",
-    ]
-    pos["check_need"] = [
-        history_end_column + 2,
-        1 if material.is_delivery_included != material.monitoring_price_history[-1].delivery else "",
-    ]
-    pos["supplier_price"] = [history_end_column + 3, material.supplier_price]
-    pos["is_delivery_included"] = [
-        history_end_column + 4,
-        "+" if material.is_delivery_included else "",
-    ]
-    pos["transport_code"] = [history_end_column + 5, index_data.transport_code]
-    pos["transport_base_price"] = [
-        history_end_column + 6,
-        index_data.transport_base_price,
-    ]
-    pos["transport_numeric_ratio"] = [
-        history_end_column + 7,
-        index_data.transport_inflation_rate,
-    ]
-    pos["transport_actual_price"] = [
-        history_end_column + 8,
-        index_data.transport_current_price,
-    ]
-    pos["gross_weight"] = [history_end_column + 9, index_data.gross_weight]
-    pos["unit_measure"] = [history_end_column + 10, material.unit_measure]
-    pos["empty_1"] = [history_end_column + 11, ""]
-    # формулы
-    pos["transport_price"] = [history_end_column + 12, -77]
-    pos["result_price"] = [history_end_column + 13, -77]
-    pos["previous_index"] = [history_end_column + 14, -77]
-    pos["result_index"] = [history_end_column + 15, -77]
-    pos["abbe_criterion"] = [history_end_column + 16, -77]
-    pos["absolute_price_change"] = [history_end_column + 17, -77]
-
-    # добавляем букву для номера колонки
-    for key in pos.keys():
-        pos[key].append(get_column_letter(pos[key][0]))
-    pos["transport_price"][1] = (
-        f"={pos['transport_base_price'][2]}{row_number}*{pos['transport_numeric_ratio'][2]}{row_number}*{pos['gross_weight'][2]}{row_number}/1000"
+    _set_new_value("price_history_range", "value",  price_range)
+    _set_items_position()
+     
+    value = "+" if material.monitoring_price_history[-1].delivery else ""
+    _set_new_value("last_period_delivery", "value", value)
+    # 
+    value = 1 if material.is_delivery_included != material.monitoring_price_history[-1].delivery else ""
+    _set_new_value("check_need", "value", value)
+    # 
+    _set_new_value("supplier_price", "value", material.supplier_price)
+    _set_new_value("is_delivery_included", "value", "+" if material.is_delivery_included else "")
+    _set_new_value("transport_code", "value", index_data.transport_code)
+    _set_new_value("transport_base_price", "value", index_data.transport_base_price)
+    _set_new_value("transport_numeric_ratio", "value", index_data.transport_inflation_rate)
+    _set_new_value("transport_actual_price", "value", index_data.transport_current_price)
+    _set_new_value("gross_weight", "value", index_data.gross_weight)
+    _set_new_value("unit_measure", "value", material.unit_measure)
+    _set_new_value("empty_1", "value", "")
+    # формул
+    _set_new_value("transport_price", "value", "")
+    _set_new_value("result_price", "value", "")
+    _set_new_value("previous_index", "value", "")
+    _set_new_value("result_index", "value", "")
+    _set_new_value("abbe_criterion", "value", "")
+    _set_new_value("absolute_price_change", "value", "")
+    # формулы    
+    transport_price_formula = (
+        f"={ITEM_POSITION['transport_base_price'].column_letter}{row_number}*"
+        f"{ITEM_POSITION['transport_numeric_ratio'].column_letter}{row_number}*"
+        f"{ITEM_POSITION['gross_weight'].column_letter}{row_number}/1000"
     )
-    # формулы
-    # formulas = [
-    #     f"={pos['transport_base_price'][2]}{row_number}*{pos['transport_numeric_ratio'][2]}{row_number}*{pos['gross_weight'][2]}{row_number}/1000",
-    #     f"=ROUND(IF({pos['is_delivery_included'][2]}{row_number}, ({pos['monitoring_price'][2]}{row_number}-{pos['transport_price'][2]}{row_number}), {pos['monitoring_price'][2]}{row_number}),2)",
-    #     f"={pos['actual_price'][2]}{row_number}/{pos['base_price'][2]}{row_number}",
-    #     f"={pos['result_price'][2]}{row_number}/{pos['base_price'][2]}{row_number}",
-    #     f"={pos['result_index'][2]}{row_number}-{pos['previous_index'][2]}{row_number}",
-    #     f"=({pos['result_index'][2]}{row_number}/{pos['previous_index'][2]}{row_number})-1",
-    #     "",
-    #     material.abbe_criterion,
-    #     f"=ROUND(ABS({pos['result_price'][2]}{row_number}-{pos['actual_price'][2]}{row_number}),3)",
-    #     f'=IF({pos["absolute_price_change"][2]}{row_number}<=1.4*{pos["abbe_criterion"][2]}{row_number}, "", 1)',
-    #     f"=({pos['result_price'][2]}{row_number}/{pos['actual_price'][2]}{row_number})-1",
-    # ]
-    # mod_row = [*data_pos[:-6], *formulas]
-    ic(pos)
-    d = dict(sorted(pos.items(), key=lambda x: x[1][0]))
+    _set_new_value("transport_price", "value", transport_price_formula)
+    # 
+    is_delivery_included_column = ITEM_POSITION["is_delivery_included"].column_letter
+    supplier_price_column = ITEM_POSITION["supplier_price"].column_letter
+    transport_price_column = ITEM_POSITION["transport_price"].column_letter
+    result_price_formula = (
+        f"=ROUND(IF(NOT(ISBLANK({is_delivery_included_column}{row_number})), "
+        f"({supplier_price_column}{row_number}-{transport_price_column}{row_number}), "
+        f"{supplier_price_column}{row_number}),2)"
+    )
+    _set_new_value("result_price", "value", result_price_formula)
+    # ic(ITEM_POSITION["result_price"].column_letter)
+    # 
+    last_price_column_number = ITEM_POSITION["price_history_range"].column_number + max_history_len - 1
+    last_price_column = get_column_letter(last_price_column_number)
+    result_price_column = ITEM_POSITION["result_price"].column_letter
+    base_price_column = ITEM_POSITION["base_price"].column_letter
+    last_index_formula = f"={last_price_column}{row_number}/{base_price_column}{row_number}"
+    result_index_formula = f"={result_price_column}{row_number}/{base_price_column}{row_number}"
+    _set_new_value("previous_index", "value", last_index_formula)
+    _set_new_value("result_index", "value", result_index_formula)
+    # 
+    result_index_column = ITEM_POSITION["result_index"].column_letter
+    previous_index_column = ITEM_POSITION["previous_index"].column_letter
+    index_change_absolute_formula = f"={result_index_column}{row_number} - {previous_index_column}{row_number}"
+    index_change_percentage_formula = f"=({result_index_column}{row_number} / {previous_index_column}{row_number}) - 1"
+    _set_new_value("index_change_absolute", "value", index_change_absolute_formula)
+    _set_new_value("index_change_in percentage", "value", index_change_percentage_formula)
+
+    d = dict(sorted(ITEM_POSITION.items(), key=lambda x: x[1].column_number))
 
     mod_row = [
         item
         for value in d.values()
-        for item in (value[1] if isinstance(value[1], list) else [value[1]])
+        for item in (value.value if isinstance(value.value, list) else [value.value])
     ]
 
-
-    ic(mod_row)
+    # ic(mod_row)
     return mod_row

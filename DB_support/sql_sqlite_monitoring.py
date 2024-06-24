@@ -105,9 +105,11 @@ sql_sqlite_monitoring = {
     "select_monitoring_materials_for_period_id": """--sql
         SELECT *
         FROM tblMonitoringMaterialsReports
-        WHERE period_id = :period_id
+        WHERE 
+            period_id = :period_id
+            AND code IN ('1.1-1-8116', '1.1-1-8134', '1.1-1-8135', '1.3-2-255', '1.3-2-265', '1.3-2-266')
         ORDER BY digit_code
-        LIMIT 5
+        --LIMIT 5
         ;
     """,
     # ------------------------------------------------------------------------

@@ -28,7 +28,7 @@ class ExcelReport(ExcelBase):
             "green_bold": Font(name="Arial", size=8, bold=True, color="006600"),
             "grey": Font(name="Arial", size=8, bold=False, color=Color("808080")),
             "blue": Font(name="Arial", size=8, bold=False, color="1F497D"),
-            "result_bold": Font(name="Arial", size=8, bold=True, color=Color("990000")),
+            "result_bold": Font(name="Arial", size=8, bold=True, color="990000"),
         }
         self.fills = {
             "calculate": PatternFill("solid", fgColor=self.colors["calculate"]),
@@ -145,119 +145,122 @@ class ExcelReport(ExcelBase):
             cell = self.worksheet.cell(row=row_index, column=column_index)
             cell.font = self.fonts["blue"]
 
-
-    def set_format_cell(self, row_index: int, item_name: str, color_name: str, number_format: str=None):
-        cell = self.worksheet.cell(row=row_index, column=ITEM_POSITION[item_name].column_number)
-        cell.font = self.fonts[color_name]
-        if number_format:
-            cell.number_format = number_format
-
-
     def write_material_format(self, sheet_name: str, row_index: int, history_len: int):
         """"""
-        self.set_format_cell(row_index, "row_count", "grey", "# ##0")
-        self.set_format_cell(row_index, "code", "default_bold")
-        self.set_format_cell(row_index, "name", "default")
-        self.set_format_cell(row_index, "base_price", "default", self.number_format)
+        columns = {
+            "row_number": 1,
+            "code": 2,
+            "title": 3,
+            "base_price": 4,
+            "history range": 5,
+            }
+        columns = {key: value.column_number for key, value in ITEM_POSITION.items()}
+
+        row_number_cell = self.worksheet.cell(row=row_index, column=columns["row_number"])
+        row_number_cell.font = self.fonts["grey"]
+
+        code_cell = self.worksheet.cell(row=row_index, column=columns["code"])
+        code_cell.font = self.fonts["default_bold"]
+
+        title_cell = self.worksheet.cell(row=row_index, column=columns["title"])
+        title_cell.font = self.fonts["default"]
+
+        # price cells
+        price_cells = [
+            columns["title"] + 1,
+            columns["title"] + 3 + history_len,
+            columns["title"] + 5 + history_len,
+        ]
+        for column_index in price_cells:
+            cell = self.worksheet.cell(row=row_index, column=column_index)
+            cell.font = self.fonts["green_bold"]
+            cell.number_format = self.number_format
         #  history
-        start_col = ITEM_POSITION["price_history_range"].column_number
+        start_col = columns["title"] + 2
         for col in range(start_col, start_col + history_len):
             cell = self.worksheet.cell(row=row_index, column=col)
             cell.font = self.fonts["grey"]
             cell.number_format = self.number_format
-        # 
-        self.set_format_cell(row_index, "last_period_delivery", "default")
-        self.set_format_cell(row_index, "check_need", "default")
-        self.set_format_cell(row_index, "supplier_price", "green_bold", self.number_format)
-        self.set_format_cell(row_index, "is_delivery_included", "default_bold")
 
-        # 
-        self.set_format_cell(row_index, "transport_code", "grey")
-        self.set_format_cell(row_index, "transport_base_price", "grey", self.number_format)
-        self.set_format_cell(row_index, "transport_numeric_ratio", "grey", self.number_format)
-        self.set_format_cell(row_index, "transport_actual_price", "grey", self.number_format)
-        #
-        self.set_format_cell(row_index, "gross_weight", "default", self.number_format)
-        self.set_format_cell(row_index, "unit_measure", "default")
-        self.set_format_cell(row_index, "empty_1", "default")
-        self.set_format_cell(row_index, "transport_price", "default_bold", self.number_format)
-        # 
-        self.set_format_cell(row_index, "result_price", "result_bold", self.number_format)
-        self.set_format_cell(row_index, "previous_index", "default", self.number_format)
-        self.set_format_cell(row_index, "result_index", "default", self.number_format)
-        # 
-        self.set_format_cell(row_index, "index_change_absolute", "default", self.number_format)
-        self.set_format_cell(row_index, "index_change_in percentage", "default", "0.00%")
+        # history transport check
+        history_transport_check_cells = [
+            columns["title"] + history_len + 6,
+            columns["title"] + history_len + 7,
+            columns["title"] + history_len + 8,
+        ]
+        for column_index in history_transport_check_cells:
+            cell = self.worksheet.cell(row=row_index, column=column_index)
+            cell.font = self.fonts["grey"]
+            cell.number_format = "# ##0"
 
 
+        # text
+        text_cells = [
+            columns["title"] + history_len + 2,
+            columns["title"] + history_len + 4,
+            columns["title"] + history_len + 9,
+            columns["title"] + history_len + 10,
+        ]
+        for column_index in text_cells:
+            cell = self.worksheet.cell(row=row_index, column=column_index)
+            cell.font = self.fonts["blue"]
 
-        # # text
-        # text_cells = [
-        #     columns["title"] + history_len + 2,
-        #     columns["title"] + history_len + 4,
-        #     columns["title"] + history_len + 9,
-        #     columns["title"] + history_len + 10,
-        # ]
-        # for column_index in text_cells:
-        #     cell = self.worksheet.cell(row=row_index, column=column_index)
-        #     cell.font = self.fonts["blue"]
 
+        # transport price
+        transport_cells = [
+            columns["title"] + history_len + 11,
+            columns["title"] + history_len + 12,
+            columns["title"] + history_len + 13,
+            columns["title"] + history_len + 14,
+        ]
+        for column_index in transport_cells:
+            cell = self.worksheet.cell(row=row_index, column=column_index)
+            cell.font = self.fonts["default"]
+            cell.number_format = self.number_format
+        # формулы
+        start_col = columns["title"] + history_len + 16
+        for column_index in range(start_col, start_col + 11):
+            cell = self.worksheet.cell(row=row_index, column=column_index)
+            cell.font = self.fonts["default"]
+            cell.number_format = self.number_format
+            cell.fill = self.fills["calculate"]
+        # result
+        result_col = columns["title"] + history_len + 17
+        cell_result = self.worksheet.cell(row=row_index, column=result_col)
+        cell_result.font = self.fonts["result_bold"]
+        cell_result.number_format = self.number_format
+        # percentage of change
+        percentage_cols = [
+            columns["title"] + history_len + 21,
+            columns["title"] + history_len + 26,
+        ]
+        for column in percentage_cols:
+            self.worksheet.cell(row=row_index, column=column).number_format = "0.00%"
 
-        # # transport price
-        # transport_cells = [
-        #     columns["title"] + history_len + 11,
-        #     columns["title"] + history_len + 12,
-        #     columns["title"] + history_len + 13,
-        #     columns["title"] + history_len + 14,
-        # ]
-        # for column_index in transport_cells:
-        #     cell = self.worksheet.cell(row=row_index, column=column_index)
-        #     cell.font = self.fonts["default"]
-        #     cell.number_format = self.number_format
-        # # формулы
-        # start_col = columns["title"] + history_len + 16
-        # for column_index in range(start_col, start_col + 11):
-        #     cell = self.worksheet.cell(row=row_index, column=column_index)
-        #     cell.font = self.fonts["default"]
-        #     cell.number_format = self.number_format
-        #     cell.fill = self.fills["calculate"]
-        # # result
-        # result_col = columns["title"] + history_len + 17
-        # cell_result = self.worksheet.cell(row=row_index, column=result_col)
-        # cell_result.font = self.fonts["result_bold"]
-        # cell_result.number_format = self.number_format
-        # # percentage of change
-        # percentage_cols = [
-        #     columns["title"] + history_len + 21,
-        #     columns["title"] + history_len + 26,
-        # ]
-        # for column in percentage_cols:
-        #     self.worksheet.cell(row=row_index, column=column).number_format = "0.00%"
+        # dangerous flag
+        flag_col = columns["title"] + history_len + 25
+        flag_cell = self.worksheet.cell(row=row_index, column=flag_col)
+        flag_cell.font = self.fonts["result_bold"]
+        flag_cell.number_format = "# ##0"
 
-        # # dangerous flag
-        # flag_col = columns["title"] + history_len + 25
-        # flag_cell = self.worksheet.cell(row=row_index, column=flag_col)
-        # flag_cell.font = self.fonts["result_bold"]
-        # flag_cell.number_format = "# ##0"
-
-        # # width
-        # slime_cells = [
-        #     1,
-        #     columns["title"] + history_len + 15,
-        #     columns["title"] + history_len + 22,
-        #     columns["title"] + history_len + 25,
-        # ]
-        # for column in slime_cells:
-        #     self.worksheet.column_dimensions[get_column_letter(column)].width = 3
-        # # брутто
-        # gross_weight_col = columns["title"] + history_len + 14
-        # self.worksheet.column_dimensions[get_column_letter(gross_weight_col)].width = 4.5
-        # # transport history check
-        # tr_check_col = columns["title"] + history_len + 6
-        # for column_index in range(tr_check_col, tr_check_col + 3):
-        #     self.worksheet.column_dimensions[
-        #         get_column_letter(column_index)
-        #     ].width = 6.5
+        # width
+        slime_cells = [
+            1,
+            columns["title"] + history_len + 15,
+            columns["title"] + history_len + 22,
+            columns["title"] + history_len + 25,
+        ]
+        for column in slime_cells:
+            self.worksheet.column_dimensions[get_column_letter(column)].width = 3
+        # брутто
+        gross_weight_col = columns["title"] + history_len + 14
+        self.worksheet.column_dimensions[get_column_letter(gross_weight_col)].width = 4.5
+        # transport history check
+        tr_check_col = columns["title"] + history_len + 6
+        for column_index in range(tr_check_col, tr_check_col + 3):
+            self.worksheet.column_dimensions[
+                get_column_letter(column_index)
+            ].width = 6.5
 
 
     def set_monitoring_price_header_format(
