@@ -12,7 +12,7 @@ monitoring_src_paths = {
         "file_name": "5_Отчет апрель 2024.xlsx",
         "sheet_name": "приложение А",
     },
-    "Май 2024": {
+    "Май 2024": {
         "file_name": "6_Отчет май 2024.xlsx",
         "sheet_name": "приложение А",
     },

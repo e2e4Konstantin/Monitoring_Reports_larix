@@ -236,8 +236,7 @@ def _create_monitoring_chain_periods(db_file) -> int:
 def _ton_supplement_periods_parsing(db: SQLiteDB):
     """Запись периодов ТСН категории 'Дополнение' из tblRawData в таблицу периодов.
     """
-    # "^\s*Дополнение\s+\d+\s*$"
-    pattern = PERIOD_PATTERNS["supplement"]
+    pattern = PERIOD_PATTERNS["supplement"] # "^\s*Дополнение\s+\d+\s*$"
     supplements = _fetch_data_by_pattern(
         db, RAW_DATA_TABLE_NAME, field_name="title", pattern=pattern
     )
@@ -309,7 +308,7 @@ def _extract_monitoring_data_from_line(
 def _ton_index_periods_parsing(db: SQLiteDB) -> int:
     """Запись периодов ТСН категории 'Индекс' из tblRawData в таблицу периодов."""
     # 209 индекс/дополнение 71 (мониторинг Февраль 2024)
-    pattern = PERIOD_PATTERNS["index"]
+    pattern = PERIOD_PATTERNS["index_old"]
     indexes = _fetch_data_by_pattern(
         db, RAW_DATA_TABLE_NAME, field_name="title", pattern=pattern
     )
@@ -389,7 +388,9 @@ def get_periods_from_larix(db_file: str, csv_file: str) -> int:
     #
     # для создания БД надо запустить DB_support.create_support_db.py
     #
+    # экспортируются все периоды: дополнения и индексы
     _export_table_periods_to_csv(csv_file, ais_access)
+    # 
     _parsing_raw_periods_from_csv(csv_file, db_file)
     return 0
 

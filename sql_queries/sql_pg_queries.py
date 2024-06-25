@@ -122,7 +122,7 @@ sql_pg_queries = {
         ;
     """,
     #
-    "select_prices_all_materials_for_target_periods": """--sql
+    "old_select_prices_all_materials_for_target_periods": """--sql
         /*
         получить историю цен ВСЕХ материалов
         для индексных периодов начиная с даты создания date_start
@@ -174,6 +174,51 @@ sql_pg_queries = {
         --LIMIT 35
         ;
     """,
+    "select_prices_all_materials_for_start_date_periods": """--sql
+        WITH target_periods AS (
+            SELECT
+                p.id AS "period_id",
+                p.date_start "start_date",
+                p.title "period_name"
+            FROM larix."period" p
+            WHERE
+                p.deleted_on IS NULL
+                AND date_start >= %(start_date)s ::date --'2024-01-01'
+                AND p.title ~ '^\s*[^ЕТФКТВНХ].+'
+			    AND (LOWER(p.title) ~ '^\s*\d+\s*индекс\/дополнение\s*\d+\s*\(.+\)\s*$'
+			    	OR LOWER(p.title) ~ '^\s*индекс\s*.*\d{4}\/дополнение\s*\d+')
+        )
+        SELECT
+            r.pressmark "code",
+            r.price ::float "base_price",
+            r.cur_price::float "current_price",
+            r.netto ::float "net_weight",
+            r.brutto ::float "gross_weight",
+            --
+            tc.pressmark "transport_code",
+		    tc.title "transport_name",
+		    tc.price ::float "transport_base_price",
+		    tc.cur_price ::float "transport_current_price",
+		    --
+		    sc.rate ::float "storage_rate",
+		    sc.title "storage_name",
+		    sc.cmt "storage_description",
+            r."period" "larix_period_id",
+            tp.period_name "period_name"
+        FROM larix.resources r
+        JOIN target_periods tp ON tp.period_id = r."period"
+        --
+        JOIN larix.transport_cost tc ON tc.id = r.transport_cost AND tc."period" = r.period
+		JOIN larix.storage_cost sc ON sc.id = r.storage_cost AND sc."period" = r.period
+        WHERE
+            r.deleted = 0
+            AND r.pressmark LIKE '1.%%'
+            AND r.pressmark NOT LIKE '1.0%%'--
+        ORDER BY r.pressmark_sort, tp.start_date ASC
+        LIMIT 30
+        ; 
+    """,
+    # 
     "select_monitoring_min_prices_for_periods_starting_date": """--sql
         /* Мониторинг цен ресурсов larix.resource_price_list
         *  получает минимальные цены для периодов начиная c даты '2024-01-01'

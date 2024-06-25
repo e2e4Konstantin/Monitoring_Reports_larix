@@ -7,7 +7,7 @@ ValuePosition = namedtuple(
 regular_story_length = 4
 
 
-ITEM_POSITION: dict[str, ValuePosition] = {
+ITEM_POSITION: dict[str, ValuePosition|None] = {
     "row_count": ValuePosition(1, "A", 0),
     "code": ValuePosition(2, "B", ""),
     "name": ValuePosition(3, "C", ""),
@@ -35,4 +35,5 @@ ITEM_POSITION: dict[str, ValuePosition] = {
     "empty_2": ValuePosition(regular_story_length + 18),
     "abbe_criterion": ValuePosition(regular_story_length + 19),
     "absolute_price_change": ValuePosition(regular_story_length + 20),
+    # "delivery_history_range": None
 }

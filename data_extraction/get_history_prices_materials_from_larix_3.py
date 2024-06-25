@@ -27,7 +27,7 @@ def _get_price_history_for_all_materials(
 ) -> list[DictRow] | None:
     """Получение истории цен на материалы, начиная с заданной даты."""
     prices = db.select(
-        sql_pg_queries["select_prices_all_materials_for_target_periods"],
+        sql_pg_queries["select_prices_all_materials_for_start_date_periods"],
         {"start_date": start_date},
     )
     return prices if prices else None
@@ -39,6 +39,10 @@ def get_history_prices_materials_from_larix(history_start_date: str) -> int | No
     Сохраняет данные tblHistoryPriceMaterials в SQLite БД.
     Строит развернутую по периодам таблицу с историей цен материалов.
     Сохраняет в tblPivotIndexMaterials.
+    !!!
+    Читает данные для всех индексных периодов начиная с START_DATE
+    Сохраняет данные только для тех периодов которые есть в таблице tblPeriods.
+    !!!
     """
 
     with PostgresDB(ais_access) as db:

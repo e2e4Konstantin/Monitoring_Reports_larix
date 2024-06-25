@@ -13,7 +13,7 @@ sql_pg_export = {
         FROM larix.period
         WHERE
             deleted_on IS NULL
-            AND period_type = 1
+            -- AND period_type = 1 -- открытый 0 / закрытый 1  (не актуальный)
             AND date_start >= '2020-01-01'::date
             AND title ~ '^\s*[^ЕTФКТВНХ].+'
         ORDER BY created_on DESC

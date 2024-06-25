@@ -7,25 +7,39 @@ import itertools
 from report_tools.line_item_position_config import ITEM_POSITION
 
 
-def create_price_history_range(
+def _create_price_history_range(
     monitoring_prices: list[MonitoringPrice] = None, max_length: int = 0
 ) -> list[float | None]:
-    """Создайте список цен. Если длина меньше max_length, заполните None."""
+    """Создайте список цен, историю последних max_len периодов. 
+    Если длина меньше max_length, заполнит None."""
     empty_range = [None] * max_length
     if not monitoring_prices:
         return empty_range
     prices = [price.price for price in monitoring_prices]
     if len(prices) >= max_length:
         return prices[-max_length:]
-    return empty_range[:len(prices)] + prices
+    return empty_range[:-len(prices)] + prices
+
+def _create_delivery_included_history(
+    monitoring_prices: list[MonitoringPrice] = None, max_length: int = 0
+) -> list[float | None]:
+    """Создайте список признаков включения транспортных расходов в цену мониторинга, 
+    историю последних max_len периодов. 
+    Если длина меньше max_length, заполнит None."""
+    empty_range = [None] * max_length
+    if not monitoring_prices:
+        return empty_range
+    delivery = [price.delivery for price in monitoring_prices]
+    if len(delivery) >= max_length:
+        return delivery[-max_length:]
+    return empty_range[:-len(delivery)] + delivery
+
+
 
 def _set_new_value(item_name: str, field_to_update: str, value: Any) -> None:
     """Устанавливает значение  в словаре ITEM_POSITION для заданного элемента."""
     if hasattr(ITEM_POSITION[item_name], field_to_update):
         ITEM_POSITION[item_name] = ITEM_POSITION[item_name]._replace(**{field_to_update: value})
-
-
-
 
 
 def _set_items_position() -> None:
@@ -74,17 +88,22 @@ def create_line_material(material: MonitoringMaterial, row_number: int, max_hist
     _set_new_value("name", "value", material.description)
     _set_new_value("base_price", "value", index_data.base_price)
     # 
-    price_range = create_price_history_range(
+    # delivery_range = _create_delivery_included_history(
+    #     material.monitoring_price_history, max_history_len
+    # )
+    # 
+    price_range = _create_price_history_range(
         material.monitoring_price_history, max_history_len
     )
     _set_new_value("price_history_range", "value",  price_range)
+    # !!!
     _set_items_position()
      
     value = "+" if material.monitoring_price_history[-1].delivery else ""
     _set_new_value("last_period_delivery", "value", value)
     # 
-    value = 1 if material.is_delivery_included != material.monitoring_price_history[-1].delivery else ""
-    _set_new_value("check_need", "value", value)
+    # value = 1 if material.is_delivery_included != material.monitoring_price_history[-1].delivery else ""
+    # _set_new_value("check_need", "value", value)
     # 
     _set_new_value("supplier_price", "value", material.supplier_price)
     _set_new_value("is_delivery_included", "value", "+" if material.is_delivery_included else "")
@@ -102,7 +121,14 @@ def create_line_material(material: MonitoringMaterial, row_number: int, max_hist
     _set_new_value("result_index", "value", "")
     _set_new_value("abbe_criterion", "value", "")
     _set_new_value("absolute_price_change", "value", "")
-    # формулы    
+    # формулы 
+    is_delivery_included_column = ITEM_POSITION["is_delivery_included"].column_letter
+    last_period_delivery_column = ITEM_POSITION["last_period_delivery"].column_letter
+    check_need_formula = (
+        f'=IF({last_period_delivery_column}{row_number}<>{is_delivery_included_column}{row_number}, 1, "")'
+     )
+    _set_new_value("check_need", "value", check_need_formula)
+
     transport_price_formula = (
         f"={ITEM_POSITION['transport_base_price'].column_letter}{row_number}*"
         f"{ITEM_POSITION['transport_numeric_ratio'].column_letter}{row_number}*"
@@ -110,7 +136,7 @@ def create_line_material(material: MonitoringMaterial, row_number: int, max_hist
     )
     _set_new_value("transport_price", "value", transport_price_formula)
     # 
-    is_delivery_included_column = ITEM_POSITION["is_delivery_included"].column_letter
+    
     supplier_price_column = ITEM_POSITION["supplier_price"].column_letter
     transport_price_column = ITEM_POSITION["transport_price"].column_letter
     result_price_formula = (

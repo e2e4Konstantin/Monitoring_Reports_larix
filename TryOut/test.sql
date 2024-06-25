@@ -217,3 +217,22 @@ WHERE
 ) AS history_price
 WHERE history_price.price_and_delivery = history_price.min_price
 ;
+
+SELECT
+    p.id,
+    p.date_start,
+    p.period_type,
+    p.title,
+    p.is_infl_rate,
+    p.cmt,
+    p.parent_id,
+    p.previous_id,
+    p.base_type_code
+FROM larix.period p
+WHERE
+    p.deleted_on IS NULL
+    AND p.date_start >= '2020-01-01'::date
+    AND p.title ~ '^\s*[^ЕТФКТВНХ].+'
+    AND (LOWER(p.title) ~ '^\s*\d+\s*индекс\/дополнение\s*\d+\s*\(.+\)\s*$'
+    OR LOWER(p.title) ~ '^\s*индекс\s*.*\d{4}\/дополнение\s*\d+')
+ORDER BY p.created_on DESC;

@@ -23,7 +23,7 @@ MONITORING_ORIGIN = "мониторинг"
 
 ROUNDING = 2
 MINIMUM_VALUE = 0E-2
-PRICE_HISTORY_START_DATE = "2023-01-01"
+PRICE_HISTORY_START_DATE = "2024-01-01"
 
 
 CONSOLE_COLORS = {
@@ -37,7 +37,8 @@ CONSOLE_COLORS = {
 PERIOD_PATTERNS = {
     "supplement": r"^\s*[Д|д]ополнение\s+\d+\s*$",
     "supplement_number": r"^\s*[Д|д]ополнение\s*(\d+)\s*$",
-    "index": r"^\s*\d+\s+индекс\/дополнение\s+\d+\s+\(.+\)\s*$",
+    "index_old": r"^\s*\d+\s+индекс\/дополнение\s+\d+\s+\(.+\)\s*$",
+    "index_new": r"^\s*индекс\s*.*\d\/дополнение\s*\d+",
     "index_number_supplement_cmt": r"^\s*(\d+)\s+индекс\/дополнение\s+(\d+)\s+\((.*)\)\s*$",
     "monitoring": r"^\s*[М|м]ониторинг\s*(.*)\s\((\d+)\s+сборник\/дополнение\s+(\d+).*\)",
 }

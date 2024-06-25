@@ -25,7 +25,7 @@ def _get_period_id_title(database: PostgresDB, period_pattern: str) -> int | Non
 
 
 def get_materials_from_larix(period_pattern: str) -> int | None:
-    """Получить данные по материалам и историю цен из Larix для периода period_pattern.
+    """Получить данные по материалам и историю цен из Larix для периода дополнения period_pattern.
     Получает историю цен для полученных материалов начиная с даты PRICE_HISTORY_START_DATE.
     Сохраняет все полученные данные в таблицу tblExpandedMaterial SQLite БД."""
     table = None

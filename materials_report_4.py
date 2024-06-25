@@ -50,9 +50,9 @@ if __name__ == "__main__":
     # 2. прочитать данные для периода read_prepare_larix_data.py
     # 3. читать исходный файл от мониторинга load_monitoring_file.py
 
-    report_file = "april_materials_report.xlsx"
+    report_file = "may_2024_materials_report.xlsx"
     sheet_name = "materials"
-    period_name = "Апрель 2024"
+    period_name = "Май 2024"
 
     create_material_monitoring_report(
         period_name=period_name,
