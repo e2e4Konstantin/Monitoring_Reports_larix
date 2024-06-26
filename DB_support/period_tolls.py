@@ -10,6 +10,72 @@ from config import DB_FILE
 
 
 
+
+def delete_period_by_id(db: SQLiteDB, period_id: int):
+    db.go_execute(sql_sqlite_periods["delete_period_by_id"], {"period_id": period_id})
+
+def get_period_by_larix_id(db: SQLiteDB, larix_period_id: int, ) -> sqlite3.Row | None:
+    """Возвращает период по его larix database_id."""
+    periods = db.go_select(
+            sql_sqlite_periods["select_by_larix_period_id"],
+            {"larix_period_id": larix_period_id},
+        )
+    if periods is None:
+        output_message_exit(f"В таблице 'tblPeriods'", 
+                            f"не найден период larix id: {larix_period_id}.")
+    return periods[0]
+
+def get_period_by_id(db: SQLiteDB, period_id: int, ) -> sqlite3.Row | None:
+    """Возвращает период по его id."""
+    periods = db.go_select(
+            sql_sqlite_periods["select_by_id"],
+            {"period_id": period_id},
+        )
+    if periods is None:
+        output_message_exit(f"В таблице 'tblPeriods'", 
+                            f"не найден период id: {period_id}.")
+    return periods[0]
+
+def get_supplement_period_by_number(db: SQLiteDB, supplement_number: int) -> sqlite3.Row | None:
+    """Получает период дополнения ТСН по номеру дополнения. """
+    supplement_periods = db.go_select(
+            sql_sqlite_periods["select_ton_supplement_by_supplement_number"],
+            {"supplement_number": supplement_number},
+        )
+    if supplement_periods is None:
+        output_message_exit(f"В таблице 'tblPeriods' для ТСН", 
+                            f"не найден период дополнения номер: {supplement_number}.")
+    return supplement_periods[0]
+
+
+
+def get_index_period_by_number(db: SQLiteDB, index_number: int) -> sqlite3.Row | None:
+    """Возвращает индексный период  ТСН по номеру индекса."""
+    index_periods = db.go_select(
+        sql_sqlite_periods["select_ton_index_by_number"],
+        {"index_number": index_number},
+    )
+    if index_periods is None:
+        output_message_exit(
+            "В таблице 'tblPeriods' для ТСН",
+            f"Не найден индексный период номер: {index_number}",
+        )
+    return index_periods[0]
+
+
+def get_monitoring_period_by_comment(db: SQLiteDB, period_comment: str) -> sqlite3.Row | None:
+    """Возвращает период мониторинга по его комментарию."""
+    monitoring_periods = db.go_select(
+        sql_sqlite_periods["select_monitoring_by_comment"],
+        {"monitoring_comment": period_comment},
+    )
+    if monitoring_periods is None:
+        output_message_exit(
+            "В таблице 'tblPeriods' для периодов Мониторинга",
+            f"Не найден период мониторинга: {period_comment!r}",
+        )
+    return monitoring_periods[0]
+
 def create_new_monitoring_period(db_file: str, previous_period: str, period_name: str)->int:
     """Создание нового периода мониторинга.
     "Мониторинг Сентябрь 2023 (204 сборник/дополнение 69)", "Апрель 2024"
@@ -50,35 +116,6 @@ def create_new_monitoring_period(db_file: str, previous_period: str, period_name
         return inserted_id
 
 
-def delete_period_by_id(db_file: str, period_id: int):
-    with SQLiteDB(db_file) as db:
-        db.go_execute(sql_sqlite_periods["delete_period_by_id"], {"period_id": period_id})
-
-
-def _get_supplement_period_id(db: SQLiteDB, supplement_number: int)-> int:
-    """Получает id периода дополнения ТСН по его номеру. """
-    result = db.go_select(
-            sql_sqlite_periods["select_ton_supplement_by_supplement_number"],
-            {"supplement_number": supplement_number},
-        )
-    if result is None:
-        output_message_exit(f"не найден ТСН период дополнения", f" с номером {supplement_number}.")
-    return result[0]['id']
-
-
-def _get_index_period(db: SQLiteDB, index_number: int)-> sqlite3.Row | None:
-    """Получает id индексного периода  ТСН по его номеру. """
-    result = db.go_select(
-            sql_sqlite_periods["select_ton_index_by_number"],
-            {"index_number": index_number},
-        )
-    if result is None:
-        output_message_exit(f"не найден ТСН индексный период", f" с номером {index_number}.")
-    return result[0]
-
-
-
-
 def create_new_ton_index_period(
     db_file: str, 
     supplement_number: int, 
@@ -88,11 +125,14 @@ def create_new_ton_index_period(
 )->int:
     """Создание нового индексного периода ТСН. """
     with SQLiteDB(db_file) as db:
-        parent_id = _get_supplement_period_id(db, supplement_number)
-        previous_index = _get_index_period(db, index_number-1)
+        parent_period = get_supplement_period(db, supplement_number)
+        parent_id = parent_period["id"]
+        # 
+        previous_index = get_index_period(db, index_number-1)
         previous_id = previous_index["id"]
         owner_id = previous_index["owner_id"]
         period_type_id = previous_index["period_type_id"]
+        # 
         create_date = datetime.now().date()
         name = f"Индекс {index_number}/{supplement_number}" 
         new_period = (

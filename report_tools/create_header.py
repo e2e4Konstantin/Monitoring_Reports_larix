@@ -22,20 +22,23 @@ def create_header(table: list[MonitoringMaterial], view_history_depth: int) -> s
         #
         "вес брутто",  # gross weight
         "ед.изм",
+        "отпускная\nцена\nпред-й период",
     ]
     header_calculated = [
         ".",
         "стоимость перевозки",
         "цена для загрузки",
-        "предыдущий индекс",
-        "текущий индекс",
-        "рост абс.",
-        "рост %",
+        			
+
+        "индекс\nпред-й",
+        "индекс\nтекущий",
+        "индекс\nрост абс.",
+        "индекс\nрост %",
         ".",
-        "критерий разниц пар",
-        "абс.",
-        "внимание",
-        "процент рост/падение",
+        "изм. абс.",
+        "изм. %",
+                # "критерий разниц пар",
+                # "внимание",
     ]
 
     history_sizes = set([material.get_history_length() for material in table])
@@ -51,7 +54,8 @@ def create_header(table: list[MonitoringMaterial], view_history_depth: int) -> s
             # ic(material.monitoring.price_history)
             # ic(material.monitoring.price_history[-max_history_len:])
             history_header = [
-                x.period_name
+                "\n".join(x.period_name.split()) 
+                # x.period_name
                 for x in material.monitoring_price_history[-max_history_len:]
             ]
             # ic(history_header)

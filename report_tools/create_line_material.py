@@ -50,8 +50,7 @@ def _set_items_position() -> None:
     price_range = ITEM_POSITION["price_history_range"].value
     history_end_column = ITEM_POSITION["price_history_range"].column_number + len(price_range)-1
     # 
-    _set_new_value("last_period_delivery", "column_number", history_end_column + 1)
-    
+    _set_new_value("last_period_delivery", "column_number", history_end_column + 1) 
     # 
     _set_new_value("check_need", "column_number", history_end_column + 2)
     _set_new_value("supplier_price", "column_number", history_end_column + 3)
@@ -62,17 +61,19 @@ def _set_items_position() -> None:
     _set_new_value("transport_actual_price", "column_number", history_end_column+8)
     _set_new_value("gross_weight", "column_number", history_end_column+9)
     _set_new_value("unit_measure", "column_number", history_end_column+10)
-    _set_new_value("empty_1", "column_number", history_end_column+11)
-    _set_new_value("transport_price", "column_number", history_end_column+12)
-    _set_new_value("result_price", "column_number", history_end_column+13)
-    _set_new_value("previous_index", "column_number", history_end_column+14)
-    _set_new_value("result_index", "column_number", history_end_column+15)
-    _set_new_value("index_change_absolute", "column_number", history_end_column+16)
-    _set_new_value("index_change_in percentage", "column_number", history_end_column+17)
+    _set_new_value("current_selling_price", "column_number", history_end_column+11)
+    _set_new_value("empty_1", "column_number", history_end_column+12)
     # 
-    _set_new_value("empty_2", "column_number", history_end_column+18)
-    _set_new_value("abbe_criterion", "column_number", history_end_column+19)
+    _set_new_value("transport_price", "column_number", history_end_column+13)
+    _set_new_value("result_price", "column_number", history_end_column+14)
+    _set_new_value("previous_index", "column_number", history_end_column+15)
+    _set_new_value("result_index", "column_number", history_end_column+16)
+    _set_new_value("index_change_absolute", "column_number", history_end_column+17)
+    _set_new_value("index_change_in_percentage", "column_number", history_end_column+18)
+    # 
+    _set_new_value("empty_2", "column_number", history_end_column+19)
     _set_new_value("absolute_price_change", "column_number", history_end_column+20)
+    _set_new_value("percentage_price_change", "column_number", history_end_column+21)
     # добавляем букву для номера колонки
     for key in ITEM_POSITION.keys():
         _set_new_value(key, "column_letter", get_column_letter(ITEM_POSITION[key].column_number))
@@ -96,7 +97,7 @@ def create_line_material(material: MonitoringMaterial, row_number: int, max_hist
         material.monitoring_price_history, max_history_len
     )
     _set_new_value("price_history_range", "value",  price_range)
-    # !!!
+    # !!! назначить столбцы
     _set_items_position()
      
     value = "+" if material.monitoring_price_history[-1].delivery else ""
@@ -113,14 +114,15 @@ def create_line_material(material: MonitoringMaterial, row_number: int, max_hist
     _set_new_value("transport_actual_price", "value", index_data.transport_current_price)
     _set_new_value("gross_weight", "value", index_data.gross_weight)
     _set_new_value("unit_measure", "value", material.unit_measure)
+    _set_new_value("current_selling_price", "value", index_data.current_price)
     _set_new_value("empty_1", "value", "")
     # формул
     _set_new_value("transport_price", "value", "")
     _set_new_value("result_price", "value", "")
     _set_new_value("previous_index", "value", "")
     _set_new_value("result_index", "value", "")
-    _set_new_value("abbe_criterion", "value", "")
     _set_new_value("absolute_price_change", "value", "")
+    _set_new_value("percentage_price_change", "value", "")
     # формулы 
     is_delivery_included_column = ITEM_POSITION["is_delivery_included"].column_letter
     last_period_delivery_column = ITEM_POSITION["last_period_delivery"].column_letter
@@ -149,19 +151,48 @@ def create_line_material(material: MonitoringMaterial, row_number: int, max_hist
     # 
     last_price_column_number = ITEM_POSITION["price_history_range"].column_number + max_history_len - 1
     last_price_column = get_column_letter(last_price_column_number)
+    # 
+    current_selling_price_column = ITEM_POSITION["current_selling_price"].column_letter
+    # 
     result_price_column = ITEM_POSITION["result_price"].column_letter
     base_price_column = ITEM_POSITION["base_price"].column_letter
-    last_index_formula = f"={last_price_column}{row_number}/{base_price_column}{row_number}"
+    # 
+    last_index_formula = f"={current_selling_price_column}{row_number}/{base_price_column}{row_number}"
     result_index_formula = f"={result_price_column}{row_number}/{base_price_column}{row_number}"
+    # 
     _set_new_value("previous_index", "value", last_index_formula)
     _set_new_value("result_index", "value", result_index_formula)
     # 
     result_index_column = ITEM_POSITION["result_index"].column_letter
     previous_index_column = ITEM_POSITION["previous_index"].column_letter
-    index_change_absolute_formula = f"={result_index_column}{row_number} - {previous_index_column}{row_number}"
-    index_change_percentage_formula = f"=({result_index_column}{row_number} / {previous_index_column}{row_number}) - 1"
+    index_change_absolute_formula = (
+        f'=IF({result_index_column}{row_number} - {previous_index_column}{row_number}, '
+        f'{result_index_column}{row_number} - {previous_index_column}{row_number}, "")'
+    )
+    index_change_percentage_formula = (
+        f'=IF(({result_index_column}{row_number} / {previous_index_column}{row_number}) - 1, '
+        f'({result_index_column}{row_number} / {previous_index_column}{row_number}) - 1, "")'
+    )
+
     _set_new_value("index_change_absolute", "value", index_change_absolute_formula)
-    _set_new_value("index_change_in percentage", "value", index_change_percentage_formula)
+    _set_new_value("index_change_in_percentage", "value", index_change_percentage_formula)
+    # 
+    absolute_price_change_formula = (
+        f'=IF({result_price_column}{row_number}-{current_selling_price_column}{row_number}, '
+        f'{result_price_column}{row_number}-{current_selling_price_column}{row_number}, "")'
+    )
+    percentage_price_change_formula = (
+        f'=IF(({result_price_column}{row_number} / {current_selling_price_column}{row_number}) - 1, '
+        f'({result_price_column}{row_number} / {current_selling_price_column}{row_number}) - 1, '
+        f'"")'
+    )
+    # ic(percentage_price_change_formula)
+    #
+    _set_new_value("absolute_price_change", "value", absolute_price_change_formula)
+    _set_new_value("percentage_price_change", "value", percentage_price_change_formula)
+    
+
+
 
     d = dict(sorted(ITEM_POSITION.items(), key=lambda x: x[1].column_number))
 

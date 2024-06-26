@@ -9,9 +9,10 @@ sql_sqlite_monitoring = {
             id INTEGER PRIMARY KEY NOT NULL,
             code TEXT,
             digit_code INTEGER,
+            period_id INTEGER,
+            larix_period_id INTEGER,
             period_name TEXT,
             index_number INTEGER,
-            period_title TEXT,
             resource_id INTEGER,
             --
             transport_included_in_price INTEGER,
@@ -27,10 +28,13 @@ sql_sqlite_monitoring = {
     """,
     "insert_row_monitoring_history_prices": """--sql
         INSERT INTO tblMonitoringHistoryPrices (
-            code, digit_code, period_name, index_number, period_title, resource_id,
-            transport_included_in_price, price, min_price, agent_name
+            code, digit_code, period_id, larix_period_id, period_name, index_number, 
+            resource_id, transport_included_in_price, price, min_price, agent_name
         )
-        VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        VALUES (
+            :code, :digit_code, :period_id, :larix_period_id, :period_name, :index_number, 
+            :resource_id, :transport_included_in_price, :price, :min_price, :agent_name
+            );
     """,
     "select_all_monitoring_history_price": """--sql
         SELECT * FROM tblMonitoringHistoryPrices ORDER BY digit_code;
@@ -53,6 +57,20 @@ sql_sqlite_monitoring = {
             transport_included_in_price AS delivery
         FROM tblMonitoringHistoryPrices
         WHERE code = :code
+        ORDER BY index_number DESC;
+    """,
+    # 
+    "select_monitoring_history_price_for_code_and_index_less": """--sql
+        SELECT
+            code,
+            period_name,
+            index_number,
+            min_price AS price,
+            transport_included_in_price AS delivery
+        FROM tblMonitoringHistoryPrices
+        WHERE 
+            code = :code
+            AND index_number <= :index_number
         ORDER BY index_number DESC;
     """,
     # ------------------------------------------------------------------------

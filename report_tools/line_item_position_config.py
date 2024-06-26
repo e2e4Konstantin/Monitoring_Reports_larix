@@ -23,17 +23,20 @@ ITEM_POSITION: dict[str, ValuePosition|None] = {
     "transport_actual_price": ValuePosition(regular_story_length + 8),
     "gross_weight": ValuePosition(regular_story_length + 9),
     "unit_measure": ValuePosition(regular_story_length + 10),
-    "empty_1": ValuePosition(regular_story_length + 11),
+    "current_selling_price": ValuePosition(regular_story_length + 11),
+    "empty_1": ValuePosition(regular_story_length + 12),
     # 
-    "transport_price": ValuePosition(regular_story_length + 12),
-    "result_price": ValuePosition(regular_story_length + 13),
-    "previous_index": ValuePosition(regular_story_length + 14),
-    "result_index": ValuePosition(regular_story_length + 15),
-    "index_change_absolute": ValuePosition(regular_story_length + 16),
-    "index_change_in percentage": ValuePosition(regular_story_length + 17),
+    "transport_price": ValuePosition(regular_story_length + 13),
+    "result_price": ValuePosition(regular_story_length + 14),
+    "previous_index": ValuePosition(regular_story_length + 15),
+    "result_index": ValuePosition(regular_story_length + 16),
+    "index_change_absolute": ValuePosition(regular_story_length + 17),
+    "index_change_in_percentage": ValuePosition(regular_story_length + 18),
     # 
-    "empty_2": ValuePosition(regular_story_length + 18),
-    "abbe_criterion": ValuePosition(regular_story_length + 19),
+    "empty_2": ValuePosition(regular_story_length + 19),
     "absolute_price_change": ValuePosition(regular_story_length + 20),
+    "percentage_price_change": ValuePosition(regular_story_length + 21),
+    # 
     # "delivery_history_range": None
+    # "abbe_criterion": ValuePosition(regular_story_length + 20),
 }

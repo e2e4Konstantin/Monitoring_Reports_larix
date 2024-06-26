@@ -162,6 +162,7 @@ sql_sqlite_periods = {
             AND supplement_number = :supplement_number
         ;
     """,
+    # 
     "select_monitoring_by_comment": """--sql
         WITH
             owner_row AS (
@@ -181,23 +182,7 @@ sql_sqlite_periods = {
     "select_by_id": """--sql
         SELECT * FROM tblPeriods WHERE id = :period_id
         ;
-    """,
-    "select_ton_supplement_by_number": """--sql
-        WITH
-            owner_row AS (
-                SELECT id FROM  tblDirectories WHERE directory = 'owners' AND name = 'TON'
-            ),
-            period_type_row AS (
-                SELECT id FROM  tblDirectories WHERE directory = 'period_types'  AND name = 'supplement'
-            )
-        SELECT *
-        FROM tblPeriods
-        WHERE
-            owner_id = (SELECT id FROM owner_row)
-            AND period_type_id = (SELECT id FROM period_type_row)
-            AND supplement_number = :supplement_number
-        ;
-    """,
+    """,   
     # 
     "select_ton_index_by_number": """--sql
         WITH
@@ -217,6 +202,15 @@ sql_sqlite_periods = {
     """,
     # 
     "select_by_larix_id": """--sql
-        SELECT * FROM tblPeriods WHERE database_id = :larix_period_id;
+        SELECT * FROM tblPeriods WHERE database_id = :larix_period_id
+        ;
     """,
+    "select_by_id": """--sql
+        SELECT * FROM tblPeriods WHERE id = :period_id
+        ;
+    """,
+    "select_by_larix_period_id": """--sql
+        SELECT * FROM tblPeriods WHERE database_id = :larix_period_id
+        ;        
+        """
 }

@@ -3,6 +3,7 @@ from icecream import ic
 
 from DB_support.sql_sqlite_monitoring import sql_sqlite_monitoring
 from DB_support.db_config import SQLiteDB
+from DB_support.period_tolls import get_period_by_larix_id
 
 from psycopg2.extras import DictRow as pg_DictRow
 from config import (
@@ -23,22 +24,26 @@ def _get_monitoring_history_prices_(db: PostgresDB, start_date: str) -> list[pg_
     )
     return monitoring_prices
 
-def _prepare_monitoring_history_price_data(price: pg_DictRow)->tuple:
-    """Преобразует данные из pg_DictRow в кортеж для SQLiteDB."""
-    # code, digit_code, period_name, index_number, period_title, resource_id,
-    # transport_included_in_price, price, min_price, agent_name
-    result = (
-        price["code"],
-        code_to_number(price["code"]),
-        price["period_name"],
-        price["index_number"],
-        price["period_title"],
-        price["resource_id"],
-        price["transport_included_in_price"],
-        price["price"],
-        price["min_price"],
-        price["agent_name"],
-    )
+def _prepare_monitoring_history_price_data(db: SQLiteDB, price: pg_DictRow)->dict:
+    """Преобразует данные из pg_DictRow в кортеж для SQLiteDB.
+        Ищет в tblPeriods период по larix_period_id.
+    """
+    # code, digit_code, period_id, larix_period_id, period_name, index_number, 
+    # resource_id, transport_included_in_price, price, min_price, agent_name
+    period_id = get_period_by_larix_id(db, price["period_id"])["id"]
+    result = {
+        "code": price["code"], 
+        "digit_code": code_to_number(price["code"]), 
+        "period_id": period_id, 
+        "larix_period_id": price["period_id"], 
+        "period_name": price["period_name"], 
+        "index_number": price["index_number"], 
+        "resource_id": price["resource_id"], 
+        "transport_included_in_price": price["transport_included_in_price"], 
+        "price": price["price"], 
+        "min_price": price["min_price"], 
+        "agent_name": price["agent_name"]
+    }
     return result
 
 
@@ -54,7 +59,7 @@ def _save_monitoring_prices_sqlite_db(
         db.go_execute(sql_sqlite_monitoring["create_index_monitoring_history_prices"])
         #
         for price in list_of_prices:
-            data = _prepare_monitoring_history_price_data(price)
+            data = _prepare_monitoring_history_price_data(db, price)
             db.go_execute(
                 sql_sqlite_monitoring["insert_row_monitoring_history_prices"],
                 data,

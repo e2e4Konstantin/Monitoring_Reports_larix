@@ -25,7 +25,7 @@ from common_features import (
 
 #
 from parse_monitoring_src_file.excel_config import SourceData
-from DB_support import sql_sqlite_queries
+from DB_support import sql_sqlite_queries, get_monitoring_period_by_comment
 
 #
 from parse_monitoring_src_file.src_file_settings import (
@@ -211,19 +211,15 @@ def save_the_monitoring_report(db_file: str, period_id: int, file_id: int) -> in
 def get_period_id_by_comment(db_file: str, period_comment: str) -> int | None:
     """Возвращает id периода мониторинга по его комментарию."""
     with SQLiteDB(db_file) as db:
-        query = sql_sqlite_periods["select_monitoring_by_comment"]
-        period = db.go_select(query, {"monitoring_comment": period_comment})
-    return period[0]["id"] if period else None
+        period = get_monitoring_period_by_comment(db, period_comment)
+    return period["id"]
 
 
 
 def load_monitoring_data_file(period_name: str, monitoring_file: str, sheet_name: str, db_file: str) -> int:
     """Разбирает файл отчета мониторинга и сохраняет его в БД."""
     period_id = get_period_id_by_comment(db_file, period_name)
-    if not period_id:
-        message = f"Не найден период {period_name!r} в таблице 'tblPeriods'"
-        output_message_exit(message, 'создай новый период мониторинга')
-    # записать в БД данные о файле отчета мониторинга
+    # записать в БД данные о файле отчета (название....)
     file_id = take_monitoring_report_file_inventory(
         db_file, period_id, monitoring_file, sheet_name
     )

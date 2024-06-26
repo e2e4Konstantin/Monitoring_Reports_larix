@@ -191,7 +191,7 @@ sql_pg_queries = {
         SELECT
             r.pressmark "code",
             r.price ::float "base_price",
-            r.cur_price::float "current_price",
+            r.cur_sale_price::float "current_price", --отпускная цена текущая
             r.netto ::float "net_weight",
             r.brutto ::float "gross_weight",
             --
@@ -215,7 +215,7 @@ sql_pg_queries = {
             AND r.pressmark LIKE '1.%%'
             AND r.pressmark NOT LIKE '1.0%%'--
         ORDER BY r.pressmark_sort, tp.start_date ASC
-        LIMIT 30
+        --LIMIT 30
         ; 
     """,
     # 
@@ -245,6 +245,7 @@ sql_pg_queries = {
                 r.pressmark AS code,
                 --r.pressmark_sort AS digit_code,
                 --
+                tp.period_id,
                 tp.period_name,
                 tp.index_num AS index_number,
                 per.title AS period_title,

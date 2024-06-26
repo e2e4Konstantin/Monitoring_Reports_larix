@@ -1,7 +1,7 @@
-from parse_monitoring_src_file import monitoring_src_paths, load_monitoring_data_file, create_new_ton_index_period
+
 from config import DB_FILE
 
-from DB_support import create_new_monitoring_period
+from DB_support import create_new_monitoring_period, create_new_ton_index_period
 
 
 if __name__ == "__main__":

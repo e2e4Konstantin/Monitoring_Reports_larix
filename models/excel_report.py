@@ -152,35 +152,41 @@ class ExcelReport(ExcelBase):
             cell.font = self.fonts["blue"]
 
 
-    def set_format_cell(self, 
-                row_index: int, item_name: str, 
-                color_name: str, 
-                number_format: str=None,
-                alignment: Alignment=None
-            ):
+    def set_cell_format(
+        self, row: int, column_name: str,
+        font_name: str = None, number_format: str = None,
+        alignment: Alignment = None, fill: PatternFill = None
+    ):
         """Устанавливает цвет и формат ячейки"""
-        cell = self.worksheet.cell(row=row_index, column=ITEM_POSITION[item_name].column_number)
-        cell.font = self.fonts[color_name]
+        column_number = ITEM_POSITION[column_name].column_number
+        cell = self.worksheet.cell(row=row, column=column_number)
+        
+        if font_name:
+            cell.font = self.fonts[font_name]
         if number_format:
             cell.number_format = number_format
         if alignment:
             cell.alignment = alignment
         else:
             cell.alignment = self.alignments["default"]
+        if fill:
+            cell.fill = fill
 
     def _set_column_width(self, column_name: str, width: int):
         """Устанавливает ширину столбца"""
         column_letter = ITEM_POSITION[column_name].column_letter
         self.worksheet.column_dimensions[column_letter].width = width
 
+    
+
 
 
     def write_material_format(self, sheet_name: str, row_index: int, history_len: int):
         """"""
-        self.set_format_cell(row_index, "row_count", "grey", "# ##0")
-        self.set_format_cell(row_index, "code", "default_bold")
-        self.set_format_cell(row_index, "name", "default", alignment=self.alignments["left"])
-        self.set_format_cell(row_index, "base_price", "default", self.number_format)
+        self.set_cell_format(row_index, "row_count", "grey", "# ##0")
+        self.set_cell_format(row_index, "code", "default_bold")
+        self.set_cell_format(row_index, "name", "default", alignment=self.alignments["left"])
+        self.set_cell_format(row_index, "base_price", "default", self.number_format)
         #  history
         start_col = ITEM_POSITION["price_history_range"].column_number
         for col in range(start_col, start_col + history_len):
@@ -189,28 +195,32 @@ class ExcelReport(ExcelBase):
             cell.number_format = self.number_format
 
         # 
-        self.set_format_cell(row_index, "last_period_delivery", "default", alignment=self.alignments["flag_char"])
-        self.set_format_cell(row_index, "check_need", "default")
-        self.set_format_cell(row_index, "supplier_price", "green_bold", self.number_format)
-        self.set_format_cell(row_index, "is_delivery_included", "default_bold", alignment=self.alignments["flag_char"])
+        self.set_cell_format(row_index, "last_period_delivery", "default", alignment=self.alignments["flag_char"])
+        self.set_cell_format(row_index, "check_need", "default")
+        self.set_cell_format(row_index, "supplier_price", "green_bold", self.number_format)
+        self.set_cell_format(row_index, "is_delivery_included", "default_bold", alignment=self.alignments["flag_char"])
         # 
-        self.set_format_cell(row_index, "transport_code", "grey")
-        self.set_format_cell(row_index, "transport_base_price", "grey", self.number_format)
-        self.set_format_cell(row_index, "transport_numeric_ratio", "grey", self.number_format)
-        self.set_format_cell(row_index, "transport_actual_price", "grey", self.number_format)
+        self.set_cell_format(row_index, "transport_code", "grey")
+        self.set_cell_format(row_index, "transport_base_price", "grey", self.number_format)
+        self.set_cell_format(row_index, "transport_numeric_ratio", "grey", self.number_format)
+        self.set_cell_format(row_index, "transport_actual_price", "grey", self.number_format)
         #
-        self.set_format_cell(row_index, "gross_weight", "default", self.number_format)
-        self.set_format_cell(row_index, "unit_measure", "default")
-        self.set_format_cell(row_index, "empty_1", "default")
-        self.set_format_cell(row_index, "transport_price", "default_bold", self.number_format)
+        self.set_cell_format(row_index, "gross_weight", "default", self.number_format)
+        self.set_cell_format(row_index, "unit_measure", "default")
+        self.set_cell_format(row_index, "current_selling_price", "blue", self.number_format)
+        self.set_cell_format(row_index, "empty_1", "default")
+        self.set_cell_format(row_index, "transport_price", "default_bold", self.number_format)
         # 
-        self.set_format_cell(row_index, "result_price", "result_bold", self.number_format)
-        self.set_format_cell(row_index, "previous_index", "default", self.number_format)
-        self.set_format_cell(row_index, "result_index", "default", self.number_format)
+        self.set_cell_format(row_index, "result_price", "result_bold", self.number_format)
+        self.set_cell_format(row_index, "previous_index", "default", self.number_format)
+        self.set_cell_format(row_index, "result_index", "default", self.number_format)
         # 
-        self.set_format_cell(row_index, "index_change_absolute", "default", self.number_format)
-        self.set_format_cell(row_index, "index_change_in percentage", "default", "0.00%")
-
+        self.set_cell_format(row_index, "index_change_absolute", "default", self.number_format)
+        self.set_cell_format(row_index, "index_change_in_percentage", "default", "0.00%")
+        # 
+        self.set_cell_format(row_index, "absolute_price_change", "default", self.number_format)
+        self.set_cell_format(row_index, "percentage_price_change", "default", "0.00%")
+        # 
         slime_cells = ["empty_1", "empty_2", "row_count"]
         for column_name in slime_cells:        
             self._set_column_width(column_name, 3)
@@ -218,7 +228,12 @@ class ExcelReport(ExcelBase):
         self._set_column_width("unit_measure", 5)
         self._set_column_width("last_period_delivery", 7)
         self._set_column_width("is_delivery_included", 7)
-        
+        # 
+        calculate_cells = [
+            "transport_price", "result_price", "previous_index", "result_index", "index_change_absolute", 
+            "index_change_in_percentage", "absolute_price_change", "percentage_price_change","empty_2",]
+        for column_name in calculate_cells:        
+            self.set_cell_format(row_index, column_name, fill=self.fills["calculate"])
 
 
 
