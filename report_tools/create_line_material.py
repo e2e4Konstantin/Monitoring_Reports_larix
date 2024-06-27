@@ -4,7 +4,7 @@ from openpyxl.utils import get_column_letter
 from models import MonitoringMaterial, MonitoringPrice
 import itertools
 
-from report_tools.line_item_position_config import ITEM_POSITION
+from config import ITEM_POSITION
 
 
 def _create_price_history_range(

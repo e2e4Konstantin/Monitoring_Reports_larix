@@ -2,9 +2,11 @@
 from openpyxl.styles import Font, PatternFill, numbers, DEFAULT_FONT, Color, Alignment
 from openpyxl.utils import get_column_letter
 from openpyxl.cell.cell import Cell
+from typing import Any
 
 from models.excel_base import ExcelBase
-from report_tools.line_item_position_config import ITEM_POSITION
+from config import ITEM_POSITION
+
 
 
 class ExcelReport(ExcelBase):
@@ -29,16 +31,21 @@ class ExcelReport(ExcelBase):
             "grey": Font(name="Arial", size=8, bold=False, color=Color("808080")),
             "blue": Font(name="Arial", size=8, bold=False, color="1F497D"),
             "result_bold": Font(name="Arial", size=8, bold=True, color=Color("990000")),
+            # 
+            "delivery": Font(name="Arial", size=8, bold=True, color=Color("963634")),
         }
         self.fills = {
             "calculate": PatternFill("solid", fgColor=self.colors["calculate"]),
             "header": PatternFill("solid", fgColor=self.colors["header"]),
             "tariff": PatternFill("solid", fgColor=self.colors["tariff_fill"]),
+            "default": PatternFill(),
         }
         self.alignments= {
             "default": Alignment(horizontal='right', vertical='bottom'),
             "left": Alignment(horizontal='left', vertical='bottom'),
+            "right": Alignment(horizontal='right', vertical='bottom'),
             "flag_char": Alignment(horizontal='center', vertical='center'),
+            "center": Alignment(horizontal='center', vertical='bottom'),
         }
 
         self.number_format = "#,##0.00"
@@ -152,6 +159,21 @@ class ExcelReport(ExcelBase):
             cell.font = self.fonts["blue"]
 
 
+    def set_cell_value_and_format(
+        self, row: int, column: int, value: Any,
+        font: str = None, number_format: str = None,
+        alignment: Alignment = None, fill: PatternFill = None
+    ):
+        """Устанавливает значение и формат ячейки."""
+        cell = self.worksheet.cell(row=row, column=column)
+        cell.value = value
+        cell.font = self.fonts[font] if font else self.fonts["default"]
+        cell.number_format = number_format if number_format else self.number_format
+        cell.alignment = alignment or self.alignments["default"]
+        cell.fill = fill or self.fills["default"]
+
+    
+
     def set_cell_format(
         self, row: int, column_name: str,
         font_name: str = None, number_format: str = None,
@@ -176,10 +198,6 @@ class ExcelReport(ExcelBase):
         """Устанавливает ширину столбца"""
         column_letter = ITEM_POSITION[column_name].column_letter
         self.worksheet.column_dimensions[column_letter].width = width
-
-    
-
-
 
     def write_material_format(self, sheet_name: str, row_index: int, history_len: int):
         """"""
@@ -256,48 +274,47 @@ class ExcelReport(ExcelBase):
             cell.fill = self.fills["header"]
             cell.alignment = Alignment(wrap_text=True, horizontal="center")
 
-    def set_regular_row_monitoring_price_format(
+    def write_material_history_line(
         self,
         sheet_name: str,
-        row: int,
-        price_delivery_flags: tuple[bool,...] = None,
+        display_line: dict,
+        row: int
     ):
-        """Устанавливает формат для строки мониторинга цен."""
-        counter_col = 1
-        code_col = 2
-        delivery_col = 3
-        title_col = 4
-        price_start_col = 5
+        """Выводит форматированную строку Мониторинга с историей цен на материал."""        
+        price_length = len(display_line["price_range"])
         sheet = self.workbook[sheet_name]
-        counter_cell = sheet.cell(row=row, column=counter_col)
-        code_cell = sheet.cell(row=row, column=code_col)
-        delivery_cell = sheet.cell(row=row, column=delivery_col)
-        title_cell = sheet.cell(row=row, column=title_col)
-        # counter format
-        counter_cell.font = self.fonts["grey"]
-        counter_cell.number_format = self.counter_format
-        counter_cell.alignment = Alignment(horizontal="center")
-        # code format
-        if True in price_delivery_flags:
-            code_cell.font = self.fonts["result_bold"]
-            code_cell.alignment = Alignment(horizontal="left")
-            # delivery format
-            delivery_cell.font = self.fonts["result_bold"]
-            delivery_cell.number_format = self.counter_format
-            delivery_cell.alignment = Alignment(horizontal="center")
-        else:
-            code_cell.font = self.fonts["default_bold"]
-            delivery_cell.font = self.fonts["grey"]
-        # title format
-        title_cell.font = self.fonts["default"]
-        # price format
-        for col, flag in enumerate(price_delivery_flags, start=price_start_col):
-            price_cell = sheet.cell(row=row, column=col)
-            if flag:
-                price_cell.font = self.fonts["result_bold"]
+        # ["No", "шифр",  "дельта",  "название", "уточнение", *modern_period_names, ".", "mean", "std"]   
+        delivery_flag = any(display_line["delivery_range"])
+        self.set_cell_value_and_format(
+            row, 1, display_line["row"], font="grey", number_format=self.counter_format, alignment=self.alignments["left"]
+        )
+        if delivery_flag:
+            self.set_cell_value_and_format(row, 2, display_line["code"], font="delivery", alignment=self.alignments["left"])
+        else:            
+            self.set_cell_value_and_format(row, 2, display_line["code"], font="default_bold", alignment=self.alignments["left"])
+        # 
+        if display_line["delta"] != 0:
+            self.set_cell_value_and_format(row, 3, display_line["delta"], number_format=self.counter_format, alignment=self.alignments["center"])
+        else:    
+            self.set_cell_value_and_format(row, 6 + price_length, "")
+        self.set_cell_value_and_format(row, 4, display_line["title"], alignment=self.alignments["left"])
+        self.set_cell_value_and_format(row, 5, display_line["name"], alignment=self.alignments["left"])
+        # +price_length
+        for i, price in enumerate(display_line["price_range"]):
+            if display_line["delivery_range"][i]:
+                self.set_cell_value_and_format(row, 6+i, price, font="delivery")
             else:
-                price_cell.font = self.fonts["default"]
-            price_cell.number_format = self.number_format
+                self.set_cell_value_and_format(row, 6+i, price)
+        #
+        if delivery_flag:
+            self.set_cell_value_and_format(row, 6 + price_length, value="+", alignment=self.alignments["center"])
+        else:
+            self.set_cell_value_and_format(row, 6 + price_length, value="")    
+        self.set_cell_value_and_format(row, 7 + price_length, display_line["mean"])
+        self.set_cell_value_and_format(row, 8 + price_length, display_line["std"])
+        self.set_cell_value_and_format(row, 9 + price_length, display_line["mean_log_diff"], number_format="#,##0.0000")
+        
+
 
     def set_column_widths(self, sheet_name: str, width: int, columns: tuple[int, ...] = None) -> None:
         """Устанавливает ширину столбцов в заданном листе."""

@@ -43,6 +43,7 @@ ORDER BY created_on desc
                 r.pressmark AS code,
                 --r.pressmark_sort AS digit_code,
                 --
+                tp.period_id,
                 tp.period_name,
                 tp.index_num AS index_number,
                 per.title AS period_title,
@@ -51,7 +52,9 @@ ORDER BY created_on desc
                 m.resources AS resource_id,
                 m.is_delivery_incl AS transport_included_in_price,
                 m.price_and_delivery::float AS price,
+                --
                 min(m.price_and_delivery) OVER (PARTITION BY r.id, per.id)::float AS min_price,
+                --
                 ROW_NUMBER() OVER (PARTITION BY r.id, per.id, m.price_and_delivery ORDER BY m.id DESC) AS row_num,
                 a.agent_name
             --  , m.created_on, m.producer
@@ -63,7 +66,7 @@ ORDER BY created_on desc
             WHERE
                 m.deleted_on IS NULL
                 --and m.is_delivery_incl = 1
-                --AND r.pressmark IN ( '1.17-1-71', '1.17-2-14')
+                AND r.pressmark IN ( '1.17-1-71', '1.17-2-14')
                 --AND m.PERIOD IN (167461475, 167319938, 167177895)
             ORDER BY r.pressmark_sort
         ) AS monitoring_prices
@@ -72,3 +75,8 @@ ORDER BY created_on desc
             AND monitoring_prices.row_num = 1
         --LIMIT 20
         ;
+        
+       
+     
+       
+       

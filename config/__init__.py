@@ -23,6 +23,7 @@ from config.const import (
 )
 from config.periods_config import periods_pattern_name
 
+from config.item_position_config import ITEM_POSITION
 # print("config.__init__ end")
 
 
