@@ -1,9 +1,9 @@
 README.md
 setup.py
 DB_support/__init__.py
-DB_support/create_new_period.py
 DB_support/create_support_db.py
 DB_support/db_config.py
+DB_support/period_tolls.py
 DB_support/sql_duck_db.py
 DB_support/sql_sqlite_common_queries.py
 DB_support/sql_sqlite_directories.py
@@ -15,11 +15,13 @@ MonitoringReports_larix.egg-info/SOURCES.txt
 MonitoringReports_larix.egg-info/dependency_links.txt
 MonitoringReports_larix.egg-info/top_level.txt
 common_features/__init__.py
+common_features/abbe_criterion.py
 common_features/files_features.py
 common_features/message.py
 common_features/text_features.py
 config/__init__.py
 config/const.py
+config/item_position_config.py
 config/periods_config.py
 config/pg_config_db.py
 config/pg_connect.py
@@ -38,7 +40,6 @@ models/excel_base.py
 models/excel_report.py
 models/historical_price.py
 models/material_index_data_model.py
-models/materials_model.py
 models/monitoring_model.py
 models/period_model.py
 models/product_model.py
@@ -54,6 +55,8 @@ report_tools/__init__.py
 report_tools/create_header.py
 report_tools/create_line_material.py
 report_tools/get_data_for_report.py
+report_tools/main_material_monitoring_report.py
+report_tools/monitoring_price_history_report.py
 sql_queries/__init__.py
 sql_queries/sql_materials.py
 sql_queries/sql_pg_export.py

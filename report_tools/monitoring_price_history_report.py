@@ -57,7 +57,7 @@ def create_monitoring_price_history_report(
                 mean, std = float(np.mean(signal)), float(np.std(signal))
                 mean_log_diff = float(np.mean(np.square(np.diff(np.log(signal)))))
             else:
-                signal, mean, std, mean_log_diff  = 0, 0, 0, 0
+                signal, mean, std, mean_log_diff  = 0, float(np.mean(signal)), 0, 0
             # print(delivery_range)
             true_count = delivery_range.count(True)
             false_count = delivery_range.count(False)

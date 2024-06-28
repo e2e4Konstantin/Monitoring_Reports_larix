@@ -7,6 +7,7 @@ sql_pg_queries = {
             AND LOWER(title) ~ %(regexp_pattern)s
         LIMIT 1;
     """,
+    # 
     "select_materials_for_period_by_regexp_title": """--sql
         -- выбрать материалы по заданному периоду regexp_pattern '^\s*Дополнение\s*72\s*$'
         WITH target_period AS (
